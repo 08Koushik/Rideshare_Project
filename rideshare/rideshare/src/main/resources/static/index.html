@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideShare Welcome</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="welcome-container">
+  <h1>Welcome to RideShare</h1>
+  <p class="description">
+    Experience the easiest way to ride, share, and manage transportation.
+    Drivers and passengers can connect seamlessly in a safe and efficient environment.
+  </p>
+  <button id="getStartedBtn">Get Started</button>
+</div>
+
+<script>
+  // Redirect to admin login page
+  document.getElementById("getStartedBtn").addEventListener("click", function() {
+      window.location.href = "admin-login.html";
+  });
+</script>
+<script src="js/common.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

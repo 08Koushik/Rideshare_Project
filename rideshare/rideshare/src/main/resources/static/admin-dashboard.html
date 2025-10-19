@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - RideShare</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="dashboard-container">
+  <h2>Admin Dashboard</h2>
+  <button id="onboardBtn">Onboard New User</button>
+  <h3>All Users</h3>
+  <table id="usersTable">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Contact</th>
+      <th>Role</th>
+      <th>Vehicle</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- User data will be populated here -->
+    </tbody>
+  </table>
+  <br>
+  <br>
+  <br>
+  <div style="margin-bottom: 20px;">
+    <button id="logoutAdminBtn">Logout</button>
+    <button id="deleteAllUsersBtn">Delete All Users</button>
+  </div>
+</div>
+
+
+<script>
+  // Define BASE_URL here to guarantee it's available before admin-dashboard.js loads
+  const BASE_URL = "http://localhost:8080/api/auth";
+</script>
+<script src="js/common.js"></script>
+<script src="js/admin-dashboard.js"></script>
+
+</body>
+</html>

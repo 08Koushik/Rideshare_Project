@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboard User - RideShare</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="form-container">
+  <h2>Onboard New User</h2>
+  <form id="onboardForm">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="contact">Phone Number</label>
+    <input type="text" id="contact" name="contact" required>
+
+    <label for="role">Role</label>
+    <select id="role" name="role" required>
+      <option value="">Select Role</option>
+      <option value="DRIVER">Driver</option>
+      <option value="PASSENGER">Passenger</option>
+    </select>
+
+    <div id="vehicleDiv" style="display: none;">
+      <label for="vehicle">Vehicle</label>
+      <input type="text" id="vehicle" name="vehicle">
+    </div>
+
+    <button type="submit">Add User</button>
+  </form>
+</div>
+
+<script>
+  const roleSelect = document.getElementById("role");
+  const vehicleDiv = document.getElementById("vehicleDiv");
+
+  // Show vehicle field only if role is DRIVER
+  roleSelect.addEventListener("change", () => {
+      if (roleSelect.value === "DRIVER") {
+          vehicleDiv.style.display = "block";
+      } else {
+          vehicleDiv.style.display = "none";
+      }
+  });
+
+  // Handle form submission
+  document.getElementById("onboardForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      // *** CORRECT DATA RETRIEVAL: Using .value for all fields ***
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const contact = document.getElementById("contact").value;
+      const role = document.getElementById("role").value;
+      const vehicle = document.getElementById("vehicle").value;
+      // ************************************************************
+
+      fetch("http://localhost:8080/api/auth/admin/onboard?name=" + encodeURIComponent(name) +
+          "&email=" + encodeURIComponent(email) +
+          "&contact=" + encodeURIComponent(contact) +
+          "&role=" + encodeURIComponent(role) +
+          "&vehicle=" + encodeURIComponent(vehicle), {
+              method: "POST"
+          })
+          .then(response => response.json())
+          .then(data => {
+
+              // === FEATURE: Display Temporary Password ===
+              const tempPassword = data.password;
+
+              alert("User '" + data.name + "' added successfully!\n\n" +
+                    "Temporary Password for First Login: " + tempPassword + "\n\n" +
+                    "Please inform the user to log in and reset their password immediately.");
+              // ==========================================
+
+              window.location.href = "admin-dashboard.html";
+          })
+          .catch(error => {
+              console.error("Error:", error);
+              alert("Error adding user. Check console for details.");
+          });
+  });
+</script>
+
+<script src="js/common.js"></script>
+<script src="js/admin.js"></script>
+
+</body>
+</html>
