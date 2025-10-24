@@ -16,6 +16,9 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     // Default Admin credentials
     private final String ADMIN_EMAIL = "admin@rideshare.com";
     private final String ADMIN_PASS = "admin@123";
@@ -44,7 +47,18 @@ public class UserService {
         // Set vehicle only for drivers
         if (role.equalsIgnoreCase("DRIVER")) user.setVehicleDetails(vehicle);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user); // Save the user
+
+        // *** NEW LOGIC: Send Email ***
+        try {
+            emailService.sendTemporaryPassword(email, name, tempPassword);
+        } catch (Exception e) {
+            // Log the failure to send email, but return the user object as the account is created
+            System.err.println("Email sending failed for user: " + email + ". Error: " + e.getMessage());
+        }
+        // *****************************
+
+        return savedUser;
     }
 
     // In com.rideshare.service.UserService.java

@@ -36,17 +36,17 @@ public class UserController {
         return userService.onboardUser(name, email, contact, role, vehicle);
     }
 
-    // User login
+
     @PostMapping("/login")
-    // MODIFIED: Changed return type from String to Object to return User (JSON) or String (Error)
+
     public Object userLogin(@RequestParam String email, @RequestParam String password) {
         try {
-            // userService.userLogin now returns User or throws RuntimeException
+
             User user = userService.userLogin(email, password);
-            // Spring converts this User object to JSON automatically
+
             return user;
         } catch (RuntimeException e) {
-            // Return the exact error message string (e.g., "FIRST_LOGIN", "Incorrect password!")
+
             return e.getMessage();
         }
     }

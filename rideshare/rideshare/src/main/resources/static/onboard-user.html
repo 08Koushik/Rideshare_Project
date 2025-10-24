@@ -52,41 +52,50 @@
   document.getElementById("onboardForm").addEventListener("submit", function(e) {
       e.preventDefault();
 
-      // *** CORRECT DATA RETRIEVAL: Using .value for all fields ***
+      // *** CRITICAL FIX: Ensure ALL variables are correctly retrieved using .value ***
+      // We must explicitly read the .value property of the HTML elements.
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
       const contact = document.getElementById("contact").value;
       const role = document.getElementById("role").value;
       const vehicle = document.getElementById("vehicle").value;
-      // ************************************************************
+      // ****************************************************************************
 
-      fetch("http://localhost:8080/api/auth/admin/onboard?name=" + encodeURIComponent(name) +
+      // Check if email is empty (simple validation against sending [object HTMLInputElement])
+      if (!email || !name) {
+          alert("Please fill in Name and Email.");
+          return;
+      }
+
+      // Construct the URL with correctly encoded String values
+      const fetchUrl = "http://localhost:8080/api/auth/admin/onboard?name=" + encodeURIComponent(name) +
           "&email=" + encodeURIComponent(email) +
           "&contact=" + encodeURIComponent(contact) +
           "&role=" + encodeURIComponent(role) +
-          "&vehicle=" + encodeURIComponent(vehicle), {
+          "&vehicle=" + encodeURIComponent(vehicle);
+
+      fetch(fetchUrl, {
               method: "POST"
           })
           .then(response => response.json())
           .then(data => {
 
-              // === FEATURE: Display Temporary Password ===
               const tempPassword = data.password;
 
-              alert("User '" + data.name + "' added successfully!\n\n" +
-                    "Temporary Password for First Login: " + tempPassword + "\n\n" +
+              // Use the locally known 'name' variable for the alert
+              alert("User '" + name + "' added successfully!\n\n" +
+<!--                    "Temporary Password: " + tempPassword + "\n\n" +-->
+                    "✅ The temporary password has been emailed to the user.\n" +
                     "Please inform the user to log in and reset their password immediately.");
-              // ==========================================
 
               window.location.href = "admin-dashboard.html";
           })
           .catch(error => {
               console.error("Error:", error);
-              alert("Error adding user. Check console for details.");
+              alert("Error adding user. Check console for details, and ensure your backend is running and email config is correct.");
           });
   });
-</script>
-
+  </script>
 <script src="js/common.js"></script>
 <script src="js/admin.js"></script>
 
