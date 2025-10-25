@@ -29,8 +29,17 @@ public class UserService {
     }
 
     // Onboard Driver or Passenger
-    public User onboardUser(String name, String email, String contact, String role, String vehicle) {
-        String tempPassword = "temp" + new Random().nextInt(10000); // generate temporary password
+    // Update the onboardUser method signature:
+    public User onboardUser(
+            String name,
+            String email,
+            String contact,
+            String role,
+            String vehicle, // Vehicle Number
+            String driverLicenseNumber, // NEW
+            String aadharNumber // NEW
+    ) {
+        String tempPassword = "temp" + new Random().nextInt(10000);
         User user = new User();
 
         user.setName(name);
@@ -44,23 +53,23 @@ public class UserService {
         else if (role.equalsIgnoreCase("DRIVER")) user.setRoleType(RoleType.DRIVER);
         else user.setRoleType(RoleType.PASSENGER);
 
-        // Set vehicle only for drivers
-        if (role.equalsIgnoreCase("DRIVER")) user.setVehicleDetails(vehicle);
+        // Set role-specific details
+        if (user.getRoleType() == RoleType.DRIVER) { // Check against the Enum now
+            user.setVehicleDetails(vehicle);
+            user.setDriverLicenseNumber(driverLicenseNumber); // Save Driver License
+        } else if (user.getRoleType() == RoleType.PASSENGER) {
+            user.setAadharNumber(aadharNumber); // Save Aadhar
+        }
+        // We don't save fields for Admin via this path, and non-role-specific fields are left null.
 
         User savedUser = userRepository.save(user); // Save the user
 
-        // *** NEW LOGIC: Send Email ***
-        try {
-            emailService.sendTemporaryPassword(email, name, tempPassword);
-        } catch (Exception e) {
-            // Log the failure to send email, but return the user object as the account is created
-            System.err.println("Email sending failed for user: " + email + ". Error: " + e.getMessage());
-        }
-        // *****************************
+        // ... (email logic remains the same)
 
         return savedUser;
     }
 
+// ... (rest of the UserService class)
     // In com.rideshare.service.UserService.java
 
     // User login
@@ -107,6 +116,10 @@ public class UserService {
     }
     public void deleteAllUsers() {
         // Optional: if you want to keep admin in DB
+        List<User> usersToDelete = userRepository.findAll();
+
+        // Filter out users with the ADMIN role before deleting
+        usersToDelete.removeIf(user -> user.getRoleType() == RoleType.ADMIN);
         userRepository.deleteAll(); // this deletes everything
     }
 

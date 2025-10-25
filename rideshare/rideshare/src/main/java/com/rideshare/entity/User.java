@@ -21,6 +21,9 @@ public class User {
     private boolean isFirstLogin;
     private String vehicleDetails;
 
+    private String driverLicenseNumber;
+    private String aadharNumber;
+
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -45,4 +48,10 @@ public class User {
 
     public String getVehicleDetails() { return vehicleDetails; }
     public void setVehicleDetails(String vehicleDetails) { this.vehicleDetails = vehicleDetails; }
+
+    public String getDriverLicenseNumber() { return driverLicenseNumber; }
+    public void setDriverLicenseNumber(String driverLicenseNumber) { this.driverLicenseNumber = driverLicenseNumber; }
+
+    public String getAadharNumber() { return aadharNumber; }
+    public void setAadharNumber(String aadharNumber) { this.aadharNumber = aadharNumber; }
 }

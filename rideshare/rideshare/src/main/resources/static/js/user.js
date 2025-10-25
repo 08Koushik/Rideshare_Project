@@ -13,7 +13,12 @@ if (userLoginForm) {
 
         // Check for empty values immediately
         if (!email || !password) {
-            alert("Please enter both email and password.");
+            //alert("Please enter both email and password.");
+            Swal.fire({
+                            icon: 'warning',
+                            title: 'Required Fields',
+                            text: "Please enter both email and password."
+                        });
             return;
         }
 
@@ -47,12 +52,22 @@ if (userLoginForm) {
                        window.location.href = "user-home.html";
                    } else {
                        // If it's another error message (e.g., "User not found!")
-                       alert("Invalid credentials. Please try again. Backend response: " + resultText);
+                       //alert("Invalid credentials. Please try again. Backend response: " + resultText);
+                       Swal.fire({
+                                                   icon: 'error',
+                                                   title: 'Login Failed',
+                                                   text: "Invalid credentials. Please try again. Backend response: " + resultText
+                                              });
                    }
 
                } catch (err) {
                    console.error("Fetch error:", err);
-                   alert("Error connecting to server. Check console for details.");
+                   //alert("Error connecting to server. Check console for details.");
+                   Swal.fire({
+                                           icon: 'error',
+                                           title: 'Connection Error',
+                                           text: "Error connecting to server. Check console for details."
+                                      });
                }
        // ...
     });

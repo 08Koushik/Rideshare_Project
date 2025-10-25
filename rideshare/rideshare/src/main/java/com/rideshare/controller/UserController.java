@@ -1,5 +1,6 @@
 package com.rideshare.controller;
 
+import com.rideshare.dto.OnboardUserRequest;
 import com.rideshare.entity.User;
 import com.rideshare.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,18 @@ public class UserController {
     // Onboard user
     @PostMapping("/admin/onboard")
     public User onboardUser(
-            @RequestParam String name,
-            @RequestParam String email,
-            @RequestParam String contact,
-            @RequestParam String role,
-            @RequestParam(required = false) String vehicle
+            @RequestBody OnboardUserRequest request // <-- Uses the single DTO object
     ) {
-        return userService.onboardUser(name, email, contact, role, vehicle);
+        // Passes DTO fields to the service layer method
+        return userService.onboardUser(
+                request.getName(),
+                request.getEmail(),
+                request.getContact(),
+                request.getRole(),
+                request.getVehicle(), // Vehicle Number (vehicleDetails in Entity)
+                request.getDriverLicenseNumber(),
+                request.getAadharNumber()
+        );
     }
 
 

@@ -19,7 +19,12 @@ async function postData(url = "", data = {}) {
     return await response.text();
   } catch (error) {
     console.error("Error:", error);
-    alert("Error: " + error.message);
+    //alert("Error: " + error.message);
+    Swal.fire({
+          icon: 'error',
+          title: 'API Error!',
+          text: "Error: " + error.message,
+        });
     throw error;
   }
 }
@@ -32,7 +37,12 @@ async function getData(url = "") {
     return await response.json();
   } catch (error) {
     console.error("Error:", error);
-    alert("Error fetching data: " + error.message);
+    //alert("Error fetching data: " + error.message);
+    Swal.fire({
+          icon: 'error',
+          title: 'API Error!',
+          text: "Error fetching data: " + error.message,
+        });
   }
 }
 
@@ -44,6 +54,11 @@ async function deleteData(url = "") {
     return await response.text();
   } catch (error) {
     console.error("Error:", error);
-    alert("Error deleting data: " + error.message);
+    //alert("Error deleting data: " + error.message);
+    Swal.fire({
+          icon: 'error',
+          title: 'API Error!',
+          text: "Error deleting data: " + error.message,
+        });
   }
 }

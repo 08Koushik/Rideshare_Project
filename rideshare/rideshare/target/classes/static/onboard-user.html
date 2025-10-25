@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Onboard User - RideShare</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 <div class="form-container">
@@ -26,25 +28,37 @@
       <option value="PASSENGER">Passenger</option>
     </select>
 
-    <div id="vehicleDiv" style="display: none;">
-      <label for="vehicle">Vehicle</label>
+    <div id="driverDiv" style="display: none;">
+      <label for="vehicle">Vehicle Number</label>
       <input type="text" id="vehicle" name="vehicle">
+
+      <label for="license">Driver License Number</label>
+      <input type="text" id="license" name="license">
+    </div>
+
+    <div id="passengerDiv" style="display: none;">
+      <label for="aadhar">Aadhar Number</label>
+      <input type="text" id="aadhar" name="aadhar">
     </div>
 
     <button type="submit">Add User</button>
   </form>
 </div>
-
 <script>
   const roleSelect = document.getElementById("role");
-  const vehicleDiv = document.getElementById("vehicleDiv");
+  const driverDiv = document.getElementById("driverDiv");
+  const passengerDiv = document.getElementById("passengerDiv");
 
-  // Show vehicle field only if role is DRIVER
+  // Show role-specific fields
   roleSelect.addEventListener("change", () => {
+      // Hide all optional fields initially
+      driverDiv.style.display = "none";
+      passengerDiv.style.display = "none";
+
       if (roleSelect.value === "DRIVER") {
-          vehicleDiv.style.display = "block";
-      } else {
-          vehicleDiv.style.display = "none";
+          driverDiv.style.display = "block";
+      } else if (roleSelect.value === "PASSENGER") {
+          passengerDiv.style.display = "block";
       }
   });
 
@@ -52,50 +66,67 @@
   document.getElementById("onboardForm").addEventListener("submit", function(e) {
       e.preventDefault();
 
-      // *** CRITICAL FIX: Ensure ALL variables are correctly retrieved using .value ***
-      // We must explicitly read the .value property of the HTML elements.
+      // 1. Get field values (Use || "" for optional fields to ensure they are sent as empty strings, not 'undefined')
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
       const contact = document.getElementById("contact").value;
       const role = document.getElementById("role").value;
-      const vehicle = document.getElementById("vehicle").value;
-      // ****************************************************************************
 
-      // Check if email is empty (simple validation against sending [object HTMLInputElement])
-      if (!email || !name) {
-          alert("Please fill in Name and Email.");
-          return;
-      }
+      // Get role-specific fields (defaulting to empty string if hidden)
+      const vehicle = document.getElementById("vehicle").value || "";
+      const driverLicenseNumber = document.getElementById("license").value || "";
+      const aadharNumber = document.getElementById("aadhar").value || "";
 
-      // Construct the URL with correctly encoded String values
-      const fetchUrl = "http://localhost:8080/api/auth/admin/onboard?name=" + encodeURIComponent(name) +
-          "&email=" + encodeURIComponent(email) +
-          "&contact=" + encodeURIComponent(contact) +
-          "&role=" + encodeURIComponent(role) +
-          "&vehicle=" + encodeURIComponent(vehicle);
+      // 2. Collect data into a JavaScript object (to be sent as JSON DTO)
+      const requestBody = {
+          name: name,
+          email: email,
+          contact: contact,
+          role: role,
+          vehicle: vehicle,
+          driverLicenseNumber: driverLicenseNumber,
+          aadharNumber: aadharNumber
+      };
 
-      fetch(fetchUrl, {
-              method: "POST"
-          })
-          .then(response => response.json())
-          .then(data => {
+      // 3. Send the request (CRITICAL: Sending JSON)
+      fetch("http://localhost:8080/api/auth/admin/onboard", { // <-- NO query params!
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json"
+          },
+          body: JSON.stringify(requestBody) // Send the JSON object
+      })
+      .then(response => response.json())
+      .then(data => {
 
-              const tempPassword = data.password;
+<!--          // Use the locally known 'name' variable for the alert-->
+<!--          alert("User '" + name + "' added successfully!\n\n" +-->
+<!--                    "✅ The temporary password has been sent to the user's email address (" + email + ").\n" +-->
+<!--                    "Please inform the user to log in and reset their password immediately.");-->
 
-              // Use the locally known 'name' variable for the alert
-              alert("User '" + name + "' added successfully!\n\n" +
-<!--                    "Temporary Password: " + tempPassword + "\n\n" +-->
-                    "✅ The temporary password has been emailed to the user.\n" +
-                    "Please inform the user to log in and reset their password immediately.");
-
-              window.location.href = "admin-dashboard.html";
-          })
-          .catch(error => {
-              console.error("Error:", error);
-              alert("Error adding user. Check console for details, and ensure your backend is running and email config is correct.");
-          });
+<!--          window.location.href = "admin-dashboard.html";-->
+Swal.fire({
+                  icon: 'success',
+                  title: 'User Onboarded!',
+                  html: "User **'" + name + "'** added successfully!<br><br>" +
+                        "✅ The temporary password has been emailed to the user (" + email + ").<br>" +
+                        "Please inform the user to log in and reset their password immediately."
+              }).then(() => {
+                  window.location.href = "admin-dashboard.html";
+              });
+      })
+      .catch(error => {
+          console.error("Error:", error);
+<!--          alert("Error adding user. Check console for details.");-->
+Swal.fire({
+                  icon: 'error',
+                  title: 'Onboarding Failed',
+                  text: "Error adding user. Check console for details, and ensure your backend is running and email config is correct."
+              });
+      });
   });
-  </script>
+</script>
+
 <script src="js/common.js"></script>
 <script src="js/admin.js"></script>
 

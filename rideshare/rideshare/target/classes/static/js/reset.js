@@ -2,7 +2,7 @@
 const BASE_URL = "http://localhost:8080/api/auth";
 
 // =================== RESET PASSWORD ===================
-const resetForm = document.getElementById("resetForm");
+const resetForm = document.getElementById("resetPasswordForm");
 if (resetForm) {
     resetForm.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -11,34 +11,59 @@ if (resetForm) {
         const confirmPassword = document.getElementById("confirmPassword").value;
 
         if (newPassword !== confirmPassword) {
-            alert("Passwords do not match!");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Mismatch',
+                text: "Passwords do not match!"
+            });
             return;
         }
 
         // Get email from localStorage (stored during first login)
-        const email = localStorage.getItem("resetEmail");
+        const email = localStorage.getItem("userEmail");
         if (!email) {
-            alert("No user found for password reset!");
+             Swal.fire({
+                icon: 'error',
+                title: 'System Error',
+                text: "User email not found. Please login again."
+            }).then(() => {
+                window.location.href = "user-login.html";
+            });
             return;
         }
 
         try {
-            const response = await fetch(`${BASE_URL}/reset-password?email=${email}&newPassword=${newPassword}`, {
+            const response = await fetch(`${BASE_URL}/reset-password?email=${encodeURIComponent(email)}&newPassword=${encodeURIComponent(newPassword)}`, {
                 method: "POST"
             });
 
             const result = await response.text();
 
             if (result.includes("successfully")) {
-                alert("Password reset successfully! Please login again.");
-                localStorage.removeItem("resetEmail");
-                window.location.href = "user-login.html";
+                // SUCCESS SweetAlert
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: "Password reset successfully! Please login again."
+                }).then(() => {
+                    localStorage.removeItem("userEmail"); // Clear stored email
+                    window.location.href = "user-login.html"; // Redirect to login
+                });
             } else {
-                alert(result);
+                // FAILURE SweetAlert
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Reset Failed',
+                    text: result
+                });
             }
         } catch (err) {
             console.error(err);
-            alert("Error resetting password!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: "Error resetting password. Check console for details."
+            });
         }
     });
 }
