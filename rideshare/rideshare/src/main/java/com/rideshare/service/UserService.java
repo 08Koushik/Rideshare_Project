@@ -65,15 +65,17 @@ public class UserService {
         User savedUser = userRepository.save(user); // Save the user
 
         // ... (email logic remains the same)
+        try {
+            emailService.sendTemporaryPassword(email, name, tempPassword);
+            System.out.println("Temporary password email sent to: " + email);
+        } catch (Exception e) {
+            // Log the failure to send email, but allow the user creation to succeed
+            System.err.println("Email sending failed for user: " + email + ". Error: " + e.getMessage());
+        }
 
         return savedUser;
     }
 
-// ... (rest of the UserService class)
-    // In com.rideshare.service.UserService.java
-
-    // User login
-    // In com.rideshare.service.UserService.java
 
     // Change return type from String to User
     public User userLogin(String email, String password) {
@@ -120,7 +122,7 @@ public class UserService {
 
         // Filter out users with the ADMIN role before deleting
         usersToDelete.removeIf(user -> user.getRoleType() == RoleType.ADMIN);
-        userRepository.deleteAll(); // this deletes everything
+        userRepository.deleteAll(usersToDelete); // this deletes everything
     }
 
 
