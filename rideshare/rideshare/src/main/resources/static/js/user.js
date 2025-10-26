@@ -43,14 +43,22 @@ if (userLoginForm) {
                        localStorage.setItem("userEmail", email);
                        window.location.href = "reset-password.html";
                    }
-                   // If it's not FIRST_LOGIN or an error string, assume it's the User JSON object
                    else if (resultText.trim().startsWith("{")) {
-                       const user = JSON.parse(resultText);
+                                          const user = JSON.parse(resultText);
 
-                       // *** CRITICAL FIX: SAVE THE FULL USER OBJECT ***
-                       localStorage.setItem("loggedInUser", JSON.stringify(user));
-                       window.location.href = "user-home.html";
-                   } else {
+                                          // *** CRITICAL FIX: SAVE THE FULL USER OBJECT ***
+                                          localStorage.setItem("loggedInUser", JSON.stringify(user));
+
+                                          // --- NEW ROLE-BASED REDIRECTION LOGIC ---
+                                          if (user.roleType === 'DRIVER') {
+                                               window.location.href = "driver-dashboard.html";
+                                          } else if (user.roleType === 'PASSENGER') {
+                                               window.location.href = "passenger-dashboard.html";
+                                          } else {
+                                               window.location.href = "user-home.html"; // Fallback for ADMIN/other roles
+                                          }
+                                          // ------------------------------------------
+                                      } else {
                        // If it's another error message (e.g., "User not found!")
                        //alert("Invalid credentials. Please try again. Backend response: " + resultText);
                        Swal.fire({

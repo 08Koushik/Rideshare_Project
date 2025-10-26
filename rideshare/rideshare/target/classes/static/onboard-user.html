@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
 <div class="form-container">
   <h2>Onboard New User</h2>
   <form id="onboardForm">
@@ -45,9 +46,11 @@
   </form>
 </div>
 <script>
+  // Define required elements
   const roleSelect = document.getElementById("role");
   const driverDiv = document.getElementById("driverDiv");
   const passengerDiv = document.getElementById("passengerDiv");
+  // Assuming BASE_URL is defined elsewhere (e.g., common.js)
 
   // Show role-specific fields
   roleSelect.addEventListener("change", () => {
@@ -92,20 +95,20 @@
       fetch("http://localhost:8080/api/auth/admin/onboard", { // <-- NO query params!
           method: "POST",
           headers: {
-              "Content-Type": "application/json"
+              "Content-Type": "application/json" // CRITICAL: Tell server to expect JSON
           },
-          body: JSON.stringify(requestBody) // Send the JSON object
+          body: JSON.stringify(requestBody) // Send the DTO object
       })
-      .then(response => response.json())
+      .then(response => {
+          if (!response.ok) {
+              // Throw error to be caught below
+              throw new Error("Failed to onboard user. Check backend logs.");
+          }
+          return response.json();
+      })
       .then(data => {
-
-<!--          // Use the locally known 'name' variable for the alert-->
-<!--          alert("User '" + name + "' added successfully!\n\n" +-->
-<!--                    "✅ The temporary password has been sent to the user's email address (" + email + ").\n" +-->
-<!--                    "Please inform the user to log in and reset their password immediately.");-->
-
-<!--          window.location.href = "admin-dashboard.html";-->
-Swal.fire({
+          // SweetAlert for SUCCESS
+          Swal.fire({
                   icon: 'success',
                   title: 'User Onboarded!',
                   html: "User **'" + name + "'** added successfully!<br><br>" +
@@ -117,16 +120,15 @@ Swal.fire({
       })
       .catch(error => {
           console.error("Error:", error);
-<!--          alert("Error adding user. Check console for details.");-->
-Swal.fire({
+          // SweetAlert for ERROR
+          Swal.fire({
                   icon: 'error',
                   title: 'Onboarding Failed',
-                  text: "Error adding user. Check console for details, and ensure your backend is running and email config is correct."
+                  text: "Error adding user. Check console for details, and ensure your backend is running and expecting JSON."
               });
       });
   });
 </script>
-
 <script src="js/common.js"></script>
 <script src="js/admin.js"></script>
 

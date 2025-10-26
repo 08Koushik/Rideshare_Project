@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driver Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="dashboard-container">
+  <h2>Driver Dashboard</h2>
+  <p>Welcome, Driver!</p>
+
+  <div style="margin-bottom: 30px;">
+    <button id="postRideBtn">Post a New Ride</button>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <h3>Your Posted Rides</h3>
+  <p class="message" style="color: #4facfe;"></p>
+
+  <h3>Bookings Received</h3>
+  <p class="message" style="color: #4facfe;"></p>
+
+  <button style="margin-top: 20px;" onclick="window.location.href='user-home.html'">View Profile Details</button>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+  document.getElementById("postRideBtn").addEventListener("click", () => {
+      window.location.href = "post-ride.html";
+  });
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "user-login.html";
+  });
+</script>
+</body>
+</html>

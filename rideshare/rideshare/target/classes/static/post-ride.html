@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Ride</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="form-container">
+    <h2>Post a Ride</h2>
+    <form id="postRideForm">
+        <label for="source">Source</label>
+        <input type="text" id="source" required>
+
+        <label for="destination">Destination</label>
+        <input type="text" id="destination" required>
+
+        <label for="date">Date</label>
+        <input type="date" id="date" required>
+
+        <label for="time">Time</label>
+        <input type="time" id="time" required>
+
+        <label for="seats">Available Seats</label>
+        <input type="number" id="seats" min="1" max="4" required>
+
+        <label for="vehicle">Vehicle Number</label>
+        <input type="text" id="vehicle" readonly>
+
+        <label for="license">Driver License Number</label>
+        <input type="text" id="license" readonly>
+
+        <button type="submit">Post Ride</button>
+    </form>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    // Define BASE_URL (assuming it's defined in common.js but using explicit link for the Ride endpoint)
+    const BASE_URL = "http://localhost:8080/api/auth";
+    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    // --- AUTO-FILL VEHICLE DETAILS ON PAGE LOAD ---
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!loggedInUser || loggedInUser.roleType !== 'DRIVER') {
+            Swal.fire('Access Denied', 'Only drivers can post rides.', 'error').then(() => {
+                window.location.href = 'user-login.html';
+            });
+            return;
+        }
+
+        // Auto-fill and set read-only fields
+        const vehicleInput = document.getElementById('vehicle');
+        const licenseInput = document.getElementById('license');
+
+        if (vehicleInput) {
+             vehicleInput.value = loggedInUser.vehicleDetails || 'N/A';
+             vehicleInput.setAttribute('readonly', 'readonly');
+        }
+        if (licenseInput) {
+             licenseInput.value = loggedInUser.driverLicenseNumber || 'N/A';
+             licenseInput.setAttribute('readonly', 'readonly');
+        }
+    });
+    // ----------------------------------------------------
+
+    document.getElementById('postRideForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (!loggedInUser || loggedInUser.roleType !== 'DRIVER') return;
+
+        const rideData = {
+            source: document.getElementById('source').value,
+            destination: document.getElementById('destination').value,
+            // Format DateTime for LocalDateTime backend parsing
+            dateTime: document.getElementById('date').value + 'T' + document.getElementById('time').value + ':00',
+            availableSeats: parseInt(document.getElementById('seats').value),
+            driverId: loggedInUser.id
+        };
+
+        try {
+            // CRITICAL: Call the correct /api/rides controller
+            const result = await fetch(`http://localhost:8080/api/rides/post`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rideData)
+            });
+
+            if (result.ok) {
+                Swal.fire('Success!', 'Ride posted successfully!', 'success').then(() => {
+                    window.location.href = 'driver-dashboard.html';
+                });
+            } else {
+                const errorText = await result.text();
+                Swal.fire('Posting Failed', errorText || 'Server error during posting. Check console.', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Connection Error', 'Could not connect to the server. Ensure backend is running.', 'error');
+        }
+    });
+</script>
+</body>
+</html>

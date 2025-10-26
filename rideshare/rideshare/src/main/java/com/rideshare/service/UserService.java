@@ -5,6 +5,7 @@ import com.rideshare.entity.User;
 import com.rideshare.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // NEW IMPORT
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,9 @@ public class UserService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder; // NEW INJECTION: USED FOR LOGIN/RESET
+
     // Default Admin credentials
     private final String ADMIN_EMAIL = "admin@rideshare.com";
     private final String ADMIN_PASS = "admin@123";
@@ -29,7 +33,6 @@ public class UserService {
     }
 
     // Onboard Driver or Passenger
-    // Update the onboardUser method signature:
     public User onboardUser(
             String name,
             String email,
@@ -45,7 +48,10 @@ public class UserService {
         user.setName(name);
         user.setEmail(email);
         user.setContactNumber(contact);
-        user.setPassword(tempPassword);
+
+        // CRITICAL FIX: HASH THE PASSWORD BEFORE SAVING
+        user.setPassword(passwordEncoder.encode(tempPassword));
+
         user.setFirstLogin(true);
 
         // Set roleType
@@ -54,22 +60,20 @@ public class UserService {
         else user.setRoleType(RoleType.PASSENGER);
 
         // Set role-specific details
-        if (user.getRoleType() == RoleType.DRIVER) { // Check against the Enum now
+        if (user.getRoleType() == RoleType.DRIVER) {
             user.setVehicleDetails(vehicle);
-            user.setDriverLicenseNumber(driverLicenseNumber); // Save Driver License
+            user.setDriverLicenseNumber(driverLicenseNumber);
         } else if (user.getRoleType() == RoleType.PASSENGER) {
-            user.setAadharNumber(aadharNumber); // Save Aadhar
+            user.setAadharNumber(aadharNumber);
         }
-        // We don't save fields for Admin via this path, and non-role-specific fields are left null.
 
-        User savedUser = userRepository.save(user); // Save the user
+        User savedUser = userRepository.save(user);
 
-        // ... (email logic remains the same)
+        // Email logic (uses the clear-text tempPassword for the email body)
         try {
             emailService.sendTemporaryPassword(email, name, tempPassword);
             System.out.println("Temporary password email sent to: " + email);
         } catch (Exception e) {
-            // Log the failure to send email, but allow the user creation to succeed
             System.err.println("Email sending failed for user: " + email + ". Error: " + e.getMessage());
         }
 
@@ -77,28 +81,27 @@ public class UserService {
     }
 
 
-    // Change return type from String to User
+    // User login
     public User userLogin(String email, String password) {
         Optional<User> userOpt = userRepository.findByEmail(email);
 
-        // 1. User not found -> throw exception
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found!");
         }
 
         User user = userOpt.get();
 
-        // 2. Password mismatch -> throw exception (using .trim() for robustness)
-        if (!user.getPassword().trim().equals(password.trim())) {
+        // CRITICAL FIX: USE BCryptPasswordEncoder.matches() for validation
+        if (!passwordEncoder.matches(password.trim(), user.getPassword().trim())) {
             throw new RuntimeException("Incorrect password!");
         }
+        // --------------------------------------------------------
 
         // 3. First Login -> throw special exception
         if (user.isFirstLogin()) {
-            throw new RuntimeException("FIRST_LOGIN"); // Signals forced password reset
+            throw new RuntimeException("FIRST_LOGIN");
         }
 
-        // 4. Successful final login -> return the User object
         return user;
     }
 
@@ -108,22 +111,27 @@ public class UserService {
         if (userOpt.isEmpty()) return "User not found!";
 
         User user = userOpt.get();
-        user.setPassword(newPassword);
+
+        // FIX: HASH the new password before saving
+        user.setPassword(passwordEncoder.encode(newPassword));
+
         user.setFirstLogin(false);
         userRepository.save(user);
         return "Password updated successfully!";
     }
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
+
+    // FIX: Correct deletion logic to preserve Admin user
     public void deleteAllUsers() {
-        // Optional: if you want to keep admin in DB
         List<User> usersToDelete = userRepository.findAll();
 
         // Filter out users with the ADMIN role before deleting
         usersToDelete.removeIf(user -> user.getRoleType() == RoleType.ADMIN);
-        userRepository.deleteAll(usersToDelete); // this deletes everything
+
+        // Delete ONLY the filtered list of non-admin users
+        userRepository.deleteAll(usersToDelete);
     }
-
-
 }

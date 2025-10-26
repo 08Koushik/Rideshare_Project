@@ -1,12 +1,14 @@
-/* General resets */
 body, html {
     margin: 0;
     padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #e0f7fa, #c5cae9);
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
 }
 
-/* Welcome container */
+
+/* Welcome container (Used on index.html) */
 .welcome-container {
     display: flex;
     flex-direction: column;
@@ -31,9 +33,9 @@ body, html {
     max-width: 600px;
 }
 
+/* General button styles for non-dashboard buttons */
 #welcome-container button,
-#getStartedBtn,
-button {
+#getStartedBtn {
     padding: 15px 40px;
     font-size: 1rem;
     border: none;
@@ -45,8 +47,7 @@ button {
 }
 
 #welcome-container button:hover,
-#getStartedBtn:hover,
-button:hover {
+#getStartedBtn:hover {
     background-color: #e6e6e6;
 }
 
@@ -57,7 +58,7 @@ button:hover {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: #f5f5f5;
+    background: none; /* Uses the body background */
 }
 
 .login-container h2 {
@@ -89,8 +90,7 @@ button:hover {
 .login-container button {
     width: 100%;
     padding: 12px;
-    border: none;
-    border-radius: 25px;
+    border-radius: 8px;
     background-color: #4facfe;
     color: #fff;
     font-size: 1rem;
@@ -108,35 +108,64 @@ button:hover {
     color: red;
 }
 
+/* Dashboard container (Admin, Driver, Passenger) */
 .dashboard-container {
-    padding: 30px;
-    background: #f5f5f5;
-    min-height: 100vh;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+
+    width: 100vw;                /* full viewport width */
+    height: 100vh;               /* full viewport height */
+
+    margin: 0;                   /* no outer gaps */
+    padding: 90px 40px 30px;     /* inner spacing (top for back button) */
+    box-sizing: border-box;
+
+    overflow-y: auto;            /* internal scroll if content is long */
 }
 
 .dashboard-container h2 {
     color: #4facfe;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    font-size: 2.2rem;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
 }
 
-#onboardBtn {
-    padding: 10px 20px;
-    border-radius: 25px;
+/* Dashboard Button Styles (Modern Aesthetic) */
+#onboardBtn,
+#logoutAdminBtn,
+#deleteAllUsersBtn,
+.dashboard-container button {
+    display: inline-block;
+    padding: 12px 25px;
+    border-radius: 8px;
     border: none;
     background-color: #4facfe;
     color: white;
     cursor: pointer;
-    margin-bottom: 20px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-right: 15px;
 }
 
-#onboardBtn:hover {
+#onboardBtn:hover,
+#logoutAdminBtn:hover,
+#deleteAllUsersBtn:hover,
+.dashboard-container button:hover {
     background-color: #00f2fe;
+    transform: translateY(-1px);
 }
 
+/* Table styles */
 table {
     width: 100%;
     border-collapse: collapse;
     background-color: white;
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 table, th, td {
@@ -153,13 +182,14 @@ th {
     color: white;
 }
 
+/* Form container (for Onboard, Post Ride, Search, Reset) */
 .form-container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 30px;
-    background-color: #f5f5f5;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    max-width: 450px;
+    margin: 80px auto;
+    padding: 35px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .form-container h2 {
@@ -185,7 +215,7 @@ form input, form select {
 form button {
     width: 100%;
     padding: 10px;
-    border-radius: 25px;
+    border-radius: 8px;
     border: none;
     background-color: #4facfe;
     color: white;
@@ -195,108 +225,88 @@ form button {
 form button:hover {
     background-color: #00f2fe;
 }
-/* User Home Container */
+
+/* User Home Container (Profile Details) */
 .home-container {
     max-width: 600px;
     margin: 50px auto;
     padding: 30px;
-    background-color: #ffffff; /* White background for the details box */
+    background-color: #ffffff;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
     text-align: center;
 }
 
-.home-container h1 {
-    color: #4facfe;
-    margin-bottom: 10px;
-    font-size: 2rem;
-}
-
-.home-container p#welcomeMessage {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 25px;
-}
-
-.user-details {
-    text-align: left;
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-}
-
-.user-details h3 {
-    color: #00f2fe;
-    border-bottom: 2px solid #00f2fe;
-    padding-bottom: 5px;
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-.user-details ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.user-details li {
-    padding: 5px 0;
-    font-size: 1rem;
-    color: #555;
-}
-
-/* Style the Logout Button to look like a standard form button */
+/* Logout Button (Specific Color and Size) */
 #logoutBtn {
     margin-top: 25px;
-    width: 50%; /* Make it prominent but not full width */
-    padding: 10px;
+    width: auto;
+    padding: 10px 20px;
     border-radius: 25px;
     border: none;
-    background-color: #ff6b6b; /* Use a distinct color for logout */
+    background-color: #ff6b6b; /* Red color for logout */
     color: white;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    display: inline-block;
+    margin-right: 15px;
 }
 
 #logoutBtn:hover {
     background-color: #ff4757;
 }
 
-/* In src/main/resources/static/css/style.css */
-
-/* Target the new buttons with the same style as onboardBtn */
-#logoutAdminBtn,
-#deleteAllUsersBtn {
-    /* Style properties matching the blue Onboard button */
-    padding: 10px 20px;
-    border-radius: 25px;
-    border: none;
-    background-color: #4facfe; /* Blue color */
-    color: white; /* White font color */
-    cursor: pointer;
-    margin-bottom: 20px;
-    margin-right: 10px; /* Add some space between them */
+/* --- BACK NAVIGATION BAR STYLE (Fixed Positioning) --- */
+.back-nav {
+    position: fixed;
+    top: 25px;
+    left: 20px;
+    z-index: 1000;
 }
 
-#logoutAdminBtn:hover,
-#deleteAllUsersBtn:hover {
-    background-color: #00f2fe; /* Hover color matching onboardBtn hover */
+.back-nav a {
+    text-decoration: none;
+    padding: 6px 12px; /* Smaller button size */
+    border-radius: 20px;
+    background-color: #4facfe;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease;
 }
 
-/* Ensure onboardBtn is defined consistently (it usually is) */
-#onboardBtn {
-    padding: 10px 20px;
-    border-radius: 25px;
-    border: none;
-    background-color: #4facfe; /* Blue color */
-    color: white; /* White font color */
-    cursor: pointer;
-    margin-bottom: 20px;
-}
-
-#onboardBtn:hover {
+.back-nav a:hover {
     background-color: #00f2fe;
+}
+
+/* --- Paste these new styles at the END of style.css --- */
+
+/* Replace existing button styles for the standard blue buttons */
+#onboardBtn,
+#logoutAdminBtn,
+#deleteAllUsersBtn,
+.dashboard-container button { /* Target buttons in dashboard */
+    /* Slightly larger targets */
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    background-color: #4facfe;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    /* Subtle shadow */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* Keep spacing consistent */
+    margin-right: 15px;
+}
+
+#onboardBtn:hover,
+#logoutAdminBtn:hover,
+#deleteAllUsersBtn:hover,
+.dashboard-container button:hover {
+    background-color: #00f2fe;
+    /* Slight lift on hover */
+    transform: translateY(-1px);
 }

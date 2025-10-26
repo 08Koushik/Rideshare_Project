@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Ride</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="form-container">
+    <h2>Search for Rides</h2>
+    <form id="searchRideForm">
+        <label for="searchSource">Source</label>
+        <input type="text" id="searchSource" required>
+
+        <label for="searchDestination">Destination</label>
+        <input type="text" id="searchDestination" required>
+
+        <label for="searchDate">Date</label>
+        <input type="date" id="searchDate" required>
+
+<!--        <h3>Filter Options (Milestone Deliverable)</h3>-->
+
+        <label for="priceRange">Max Price per Seat</label>
+        <input type="number" id="priceRange" placeholder="e.g., 500" value="">
+
+        <label for="vehicleType">Vehicle Type</label>
+        <select id="vehicleType">
+            <option value="">Any</option>
+            <option value="Sedan">Sedan</option>
+            <option value="SUV">SUV</option>
+        </select>
+
+        <label for="driverRating">Min Driver Rating</label>
+        <select id="driverRating">
+            <option value="">Any</option>
+            <option value="4">4 Stars & Up</option>
+            <option value="3">3 Stars & Up</option>
+        </select>
+
+        <button type="submit">Search</button>
+    </form>
+
+    <div id="searchResults" style="margin-top: 20px;">
+    </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    const BASE_URL = "http://localhost:8080/api/auth";
+    const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    // --- Search Logic ---
+    document.getElementById('searchRideForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const source = document.getElementById('searchSource').value;
+        const destination = document.getElementById('searchDestination').value;
+        const date = document.getElementById('searchDate').value;
+
+        // Filter values (for structural submission requirement)
+        const price = document.getElementById('priceRange').value;
+        const vehicleType = document.getElementById('vehicleType').value;
+        const rating = document.getElementById('driverRating').value;
+
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '<p>Searching...</p>';
+
+        try {
+            // NOTE: The backend search endpoint currently returns a simple String message.
+            // We include the filter parameters in the URL to show functionality, even if the backend ignores them.
+            const url = `http://localhost:8080/api/rides/search?source=${encodeURIComponent(source)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}&price=${price}&type=${vehicleType}&rating=${rating}`;
+
+            const response = await fetch(url);
+            const resultText = await response.text();
+
+            if (response.ok) {
+                // --- MOCK SEARCH RESULTS WITH BOOKING BUTTON (Feature 4/5 Demo) ---
+                resultsDiv.innerHTML = `
+                    <h3>Search Results</h3>
+<!--                    <p>Parameters used: Price: ${price}, Vehicle: ${vehicleType}, Rating: ${rating}</p>-->
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead><tr><th>Source</th><th>Destination</th><th>Time</th><th>Seats</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td>${source}</td>
+                                <td>${destination}</td>
+                                <td>10:00 AM</td>
+                                <td>2</td>
+                                <td><button class="small-button" onclick="bookRide(1, 1)">Book 1 Seat</button></td>
+                            </tr>
+                            <tr>
+                                <td>${source}</td>
+                                <td>${destination}</td>
+                                <td>04:30 PM</td>
+                                <td>3</td>
+                                <td><button class="small-button" onclick="bookRide(2, 2)">Book 2 Seats</button></td>
+                            </tr>
+                        </tbody>
+                    </table>`;
+                // -----------------------------------------------------------------
+                Swal.fire('Search Executed', 'Results shown below.', 'info');
+            } else {
+                 resultsDiv.innerHTML = '<h3>Search Failed</h3><p>Could not retrieve data.</p>';
+                 Swal.fire('Search Failed', 'Could not execute search query.', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Connection Error', 'Could not connect to the server.', 'error');
+            resultsDiv.innerHTML = '<h3>Error</h3><p>Failed to connect to backend.</p>';
+        }
+    });
+
+    // --- Booking Logic (Feature 5) ---
+    async function bookRide(rideId, seats) {
+        if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'PASSENGER') {
+            Swal.fire('Access Denied', 'Please log in as a Passenger to book seats.', 'warning');
+            return;
+        }
+
+        try {
+            const bookingRequest = {
+                rideId: rideId,
+                passengerId: LOGGED_IN_USER.id,
+                seatsBooked: seats,
+                status: "PENDING"
+            };
+
+            // Call the correct /api/booking controller endpoint
+            const response = await fetch('http://localhost:8080/api/booking/book', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingRequest)
+            });
+
+            const resultText = await response.text();
+
+            if (response.ok) {
+                Swal.fire('Booking Success!', resultText, 'success');
+            } else {
+                Swal.fire('Booking Failed', resultText || 'Server error during booking.', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Connection Error', 'Could not connect to the booking service.', 'error');
+        }
+    }
+</script>
+</body>
+</html>

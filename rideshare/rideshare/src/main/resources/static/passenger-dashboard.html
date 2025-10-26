@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passenger Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="dashboard-container">
+    <h2>Passenger Dashboard</h2>
+    <p>Welcome, Passenger! Find and book your next ride.</p>
+
+    <div style="margin-bottom: 30px;">
+        <button id="searchRideBtn">Search for Rides</button>
+        <button id="logoutBtn">Logout</button>
+    </div>
+
+    <h3>Your Past Bookings</h3>
+    <p class="message" style="color: #4facfe;"></p>
+
+    <button style="margin-top: 20px;" onclick="window.location.href='user-home.html'">View Profile Details</button>
+</div>
+<script src="js/common.js"></script>
+<script>
+    document.getElementById("searchRideBtn").addEventListener("click", () => {
+        window.location.href = "search-ride.html";
+    });
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("loggedInUser");
+        window.location.href = "user-login.html";
+    });
+</script>
+</body>
+</html>
