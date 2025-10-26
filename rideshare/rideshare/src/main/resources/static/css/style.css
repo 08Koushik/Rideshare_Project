@@ -1,12 +1,16 @@
+/* General resets */
 body, html {
     margin: 0;
     padding: 0;
-    height: 100%;
-    overflow: hidden;
-    background: linear-gradient(135deg, #e0f7fa, #c5cae9);
     font-family: Arial, sans-serif;
-}
 
+    /* CRITICAL FIX: Force full viewport size and prevent external scrolling */
+    height: 100vh; /* Use vh for absolute viewport height */
+    overflow: hidden; /* Hides all scrolling */
+
+    /* General background gradient for a modern feel */
+    background: linear-gradient(135deg, #e0f7fa, #c5cae9);
+}
 
 /* Welcome container (Used on index.html) */
 .welcome-container {
@@ -58,7 +62,7 @@ body, html {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: none; /* Uses the body background */
+    background: none;
 }
 
 .login-container h2 {
@@ -111,17 +115,20 @@ body, html {
 /* Dashboard container (Admin, Driver, Passenger) */
 .dashboard-container {
     background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 0; /* Remove border radius if you want sharp corners at edges */
+    box-shadow: none; /* Remove shadow to blend with the white background */
 
-    width: 100vw;                /* full viewport width */
-    height: 100vh;               /* full viewport height */
+    /* CRITICAL FIXES FOR FULL COVERAGE */
+    width: 100vw; /* CRITICAL: Force to full viewport width */
+    height: 100vh; /* CRITICAL: Force to full viewport height */
 
-    margin: 0;                   /* no outer gaps */
-    padding: 90px 40px 30px;     /* inner spacing (top for back button) */
-    box-sizing: border-box;
+    margin: 0; /* REMOVE ALL OUTER MARGINS */
 
-    overflow-y: auto;            /* internal scroll if content is long */
+    /* Keep inner spacing and top padding for the back button */
+    padding: 30px;
+    padding-top: 70px; /* Space for the fixed back button */
+
+    overflow-y: auto; /* Allows internal scrolling for tables/content */
 }
 
 .dashboard-container h2 {
@@ -156,6 +163,25 @@ body, html {
 .dashboard-container button:hover {
     background-color: #00f2fe;
     transform: translateY(-1px);
+}
+
+/* Specific Logout Button Styling (Red) */
+#logoutBtn {
+    margin-top: 25px;
+    width: auto;
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: none;
+    background-color: #ff6b6b;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+    margin-right: 15px;
+}
+
+#logoutBtn:hover {
+    background-color: #ff4757;
 }
 
 /* Table styles */
@@ -237,25 +263,6 @@ form button:hover {
     text-align: center;
 }
 
-/* Logout Button (Specific Color and Size) */
-#logoutBtn {
-    margin-top: 25px;
-    width: auto;
-    padding: 10px 20px;
-    border-radius: 25px;
-    border: none;
-    background-color: #ff6b6b; /* Red color for logout */
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    display: inline-block;
-    margin-right: 15px;
-}
-
-#logoutBtn:hover {
-    background-color: #ff4757;
-}
-
 /* --- BACK NAVIGATION BAR STYLE (Fixed Positioning) --- */
 .back-nav {
     position: fixed;
@@ -266,7 +273,7 @@ form button:hover {
 
 .back-nav a {
     text-decoration: none;
-    padding: 6px 12px; /* Smaller button size */
+    padding: 6px 12px;
     border-radius: 20px;
     background-color: #4facfe;
     color: white;
@@ -280,33 +287,10 @@ form button:hover {
     background-color: #00f2fe;
 }
 
-/* --- Paste these new styles at the END of style.css --- */
-
-/* Replace existing button styles for the standard blue buttons */
-#onboardBtn,
-#logoutAdminBtn,
-#deleteAllUsersBtn,
-.dashboard-container button { /* Target buttons in dashboard */
-    /* Slightly larger targets */
-    padding: 12px 25px;
-    border-radius: 8px;
-    border: none;
-    background-color: #4facfe;
-    color: white;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-    /* Subtle shadow */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    /* Keep spacing consistent */
-    margin-right: 15px;
-}
-
-#onboardBtn:hover,
-#logoutAdminBtn:hover,
-#deleteAllUsersBtn:hover,
-.dashboard-container button:hover {
-    background-color: #00f2fe;
-    /* Slight lift on hover */
-    transform: translateY(-1px);
+/* Style for Search Results Container (Allows list to scroll internally) */
+/* Style for Search Results Container */
+#searchResults {
+    max-height: 400px; /* Limit the display height */
+    overflow-y: auto; /* CRITICAL FIX: Add vertical scrollbar if content overflows */
+    padding-right: 10px; /* Add some space if the scrollbar appears */
 }
