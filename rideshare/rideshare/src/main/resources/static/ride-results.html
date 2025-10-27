@@ -3,15 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Search Results</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>Ride Search Results</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-<body>
-<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
 
-<div class="dashboard-container">
+  <style>
+    /* ===== Global Page Style ===== */
+    body {
+      font-family: 'Poppins', Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    /* ===== Back Button ===== */
+    .back-nav {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+
+    .back-nav a {
+      background-color: #3399ff;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 15px;
+      transition: background-color 0.3s ease;
+    }
+
+    .back-nav a:hover {
+      background-color: #0073e6;
+    }
+
+    /* ===== Main Container ===== */
+    .form-container {
+      width: 90%;
+      max-width: 900px;
+      background: #fff;
+      margin: 80px auto;
+      border-radius: 10px;
+      padding: 25px 35px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ===== Headings ===== */
+    h2 {
+      text-align: center;
+      color: #007bff;
+      margin-bottom: 10px;
+      font-size: 26px;
+    }
+
+    h3 {
+      color: #333;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    /* ===== Paragraphs ===== */
+    p {
+      color: #555;
+      text-align: center;
+      margin: 5px 0;
+    }
+
+    /* ===== Table Styles ===== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 15px;
+    }
+
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #007bff;
+      color: #fff;
+      font-weight: normal;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    /* ===== Buttons ===== */
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .small-button {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    /* ===== New Search Button ===== */
+    .form-container button {
+      display: inline-block;
+      margin-top: 15px;
+    }
+
+    /* ===== SweetAlert Font ===== */
+    .swal2-popup {
+      font-size: 15px !important;
+    }
+  </style>
+</head>
+
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&larr; Back</a></div>
+
+<div class="form-container">
   <h2>Ride Search Results</h2>
   <p id="searchSummary">Loading search results...</p>
 
@@ -19,10 +140,9 @@
     <p>A table of results will be displayed here.</p>
   </div>
 
-  <button style="margin-top: 20px;" onclick="window.location.href='search-ride.html'">New Search</button>
+  <button onclick="window.location.href='search-ride.html'">New Search</button>
 </div>
 
-<script src="js/common.js"></script>
 <script src="js/common.js"></script>
 <script>
   const BASE_URL = "http://localhost:8080/api/auth";
@@ -46,30 +166,22 @@
       summaryP.innerHTML = `Searching for rides from <strong>${params.source}</strong> to <strong>${params.destination}</strong>.`;
       resultsDiv.innerHTML = '<p>Loading rides...</p>';
 
-      // 1. Construct API URL with parameters
       const url = `http://localhost:8080/api/rides/search?source=${encodeURIComponent(params.source)}&destination=${encodeURIComponent(params.destination)}&date=${encodeURIComponent(params.date)}&price=${params.price}&type=${params.vehicleType}&rating=${params.rating}`;
 
       try {
           const response = await fetch(url);
-
-          if (!response.ok) {
-              throw new Error(response.statusText || 'Failed to retrieve data.');
-          }
-
-          // CRITICAL CHANGE: Expect JSON array of rides
+          if (!response.ok) throw new Error(response.statusText || 'Failed to retrieve data.');
           const rides = await response.json();
 
-          // Build the table header
           let tableHtml = `
               <h3>Found ${rides.length} Ride(s)</h3>
-              <table style="width: 100%; border-collapse: collapse;">
+              <table>
                   <thead><tr><th>Source</th><th>Destination</th><th>Date/Time</th><th>Seats Left</th><th>Driver ID</th><th>Action</th></tr></thead>
                   <tbody>`;
 
           if (rides.length === 0) {
                tableHtml += '<tr><td colspan="6" style="text-align:center;">No rides match your search criteria.</td></tr>';
           } else {
-              // 2. Loop through actual results and build rows
               rides.forEach(ride => {
                   tableHtml += `
                       <tr>
@@ -79,8 +191,7 @@
                           <td>${ride.availableSeats}</td>
                           <td>${ride.driverId}</td>
                           <td><button class="small-button" onclick="bookRide(${ride.id}, 1)">Book Seat</button></td>
-                      </tr>
-                  `;
+                      </tr>`;
               });
           }
 
@@ -88,14 +199,12 @@
           resultsDiv.innerHTML = tableHtml;
 
           Swal.fire('Search Complete', `Found ${rides.length} rides.`, 'success');
-
       } catch (error) {
           Swal.fire('Connection Error', `Failed to load search results: ${error.message}`, 'error');
           resultsDiv.innerHTML = '<h3>Error</h3><p>Failed to connect to backend or retrieve data.</p>';
       }
   }
 
-  // --- Booking Logic (Remains the same) ---
   async function bookRide(rideId, seats) {
       if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'PASSENGER') {
           Swal.fire('Access Denied', 'Please log in as a Passenger to book seats.', 'warning');
@@ -117,14 +226,13 @@
 
           const resultText = await response.text();
 
-        if (response.ok) {
-    Swal.fire('Booking Success!', resultText, 'success').then(() => {
-        // Refresh search results to show updated seat counts
-        loadSearchResults();
-    });
-} else {
-    Swal.fire('Booking Failed', resultText || 'Server error during booking.', 'error');
-}
+          if (response.ok) {
+              Swal.fire('Booking Success!', resultText, 'success').then(() => {
+                  loadSearchResults();
+              });
+          } else {
+              Swal.fire('Booking Failed', resultText || 'Server error during booking.', 'error');
+          }
 
       } catch (error) {
           Swal.fire('Connection Error', 'Could not connect to the booking service.', 'error');

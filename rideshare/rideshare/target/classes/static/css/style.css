@@ -6,7 +6,9 @@ body, html {
     height: 100%;
     width: 100%;
     overflow-x: hidden;
-    background-color: #f0f4f8;
+    /* FIX 1: Set the background image to cover the whole viewport */
+    background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
+    background-size: cover;
 }
 
 /* ===== Buttons ===== */
@@ -66,7 +68,8 @@ button:hover {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: #f0f4f8;
+    /* FIX 3: Remove solid background to expose body background image */
+    background: none;
 }
 
 .login-container h2 {
@@ -280,9 +283,12 @@ button:hover {
     max-width: 450px;
     margin: 50px auto;
     padding: 35px;
-    background-color: #ffffff;
+    /* FIX 2: Set semi-transparent background for readability */
+    background-color: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px);
     border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    /* Adjust shadow to stand out slightly more against the new background */
+    box-shadow: 0 5px 30px rgba(0,0,0,0.15);
 }
 
 .form-container h2 {
