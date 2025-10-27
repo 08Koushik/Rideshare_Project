@@ -1,18 +1,30 @@
-/* General resets */
+/* ===== Global Styles ===== */
 body, html {
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
-
-    /* CRITICAL FIX: Force full viewport size and prevent external scrolling */
-    height: 100vh; /* Use vh for absolute viewport height */
-    overflow: hidden; /* Hides all scrolling */
-
-    /* General background gradient for a modern feel */
-    background: linear-gradient(135deg, #e0f7fa, #c5cae9);
+    font-family: 'Poppins', Arial, sans-serif;
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    background-color: #f0f4f8;
 }
 
-/* Welcome container (Used on index.html) */
+/* ===== Buttons ===== */
+button {
+    padding: 12px 25px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+/* ===== Welcome Page ===== */
 .welcome-container {
     display: flex;
     flex-direction: column;
@@ -37,32 +49,24 @@ body, html {
     max-width: 600px;
 }
 
-/* General button styles for non-dashboard buttons */
-#welcome-container button,
-#getStartedBtn {
-    padding: 15px 40px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 30px;
+.welcome-container .btn {
     background-color: #fff;
     color: #4facfe;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    font-weight: bold;
 }
 
-#welcome-container button:hover,
-#getStartedBtn:hover {
-    background-color: #e6e6e6;
+.welcome-container .btn:hover {
+    background-color: #e0f7fa;
 }
 
-/* Login container */
+/* ===== Login Page ===== */
 .login-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: none;
+    background: #f0f4f8;
 }
 
 .login-container h2 {
@@ -96,10 +100,7 @@ body, html {
     padding: 12px;
     border-radius: 8px;
     background-color: #4facfe;
-    color: #fff;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    color: white;
 }
 
 .login-container button:hover {
@@ -112,106 +113,172 @@ body, html {
     color: red;
 }
 
-/* Dashboard container (Admin, Driver, Passenger) */
-.dashboard-container {
-    background-color: #ffffff;
-    border-radius: 0; /* Remove border radius if you want sharp corners at edges */
-    box-shadow: none; /* Remove shadow to blend with the white background */
-
-    /* CRITICAL FIXES FOR FULL COVERAGE */
-    width: 100vw; /* CRITICAL: Force to full viewport width */
-    height: 100vh; /* CRITICAL: Force to full viewport height */
-
-    margin: 0; /* REMOVE ALL OUTER MARGINS */
-
-    /* Keep inner spacing and top padding for the back button */
-    padding: 30px;
-    padding-top: 70px; /* Space for the fixed back button */
-
-    overflow-y: auto; /* Allows internal scrolling for tables/content */
-}
-
-.dashboard-container h2 {
-    color: #4facfe;
-    margin-bottom: 25px;
-    font-size: 2.2rem;
-    border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 10px;
-}
-
-/* Dashboard Button Styles (Modern Aesthetic) */
-#onboardBtn,
-#logoutAdminBtn,
-#deleteAllUsersBtn,
-.dashboard-container button {
-    display: inline-block;
-    padding: 12px 25px;
-    border-radius: 8px;
-    border: none;
+/* ===== Sidebar ===== */
+.sidebar {
+    width: 220px;
     background-color: #4facfe;
     color: white;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-right: 15px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
-#onboardBtn:hover,
-#logoutAdminBtn:hover,
-#deleteAllUsersBtn:hover,
-.dashboard-container button:hover {
+.sidebar-header {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 30px;
+}
+
+.profile-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar-menu li {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu li.active,
+.sidebar-menu li:hover {
     background-color: #00f2fe;
-    transform: translateY(-1px);
+    color: #fff;
 }
 
-/* Specific Logout Button Styling (Red) */
-#logoutBtn {
-    margin-top: 25px;
-    width: auto;
-    padding: 10px 20px;
-    border-radius: 25px;
-    border: none;
+.sidebar-menu li.logout {
     background-color: #ff6b6b;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    display: inline-block;
-    margin-right: 15px;
 }
 
-#logoutBtn:hover {
+.sidebar-menu li.logout:hover {
     background-color: #ff4757;
 }
 
-/* Table styles */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: white;
-    margin-top: 20px;
-    border-radius: 8px;
-    overflow: hidden;
+/* ===== Back Navigation ===== */
+.back-nav {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
 }
 
-table, th, td {
-    border: 1px solid #ccc;
-}
-
-th, td {
-    padding: 10px;
-    text-align: left;
-}
-
-th {
+.back-nav a {
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 20px;
     background-color: #4facfe;
     color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: background 0.3s;
 }
 
-/* Form container (for Onboard, Post Ride, Search, Reset) */
+.back-nav a:hover {
+    background-color: #00f2fe;
+}
+
+/* ===== Main Content ===== */
+.main-content {
+    margin-left: 220px;
+    padding: 60px 30px 30px 30px;
+    overflow-y: auto;
+    height: 100vh;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.header-right input {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+}
+
+.header-right button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4facfe;
+    color: white;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.header-right button:hover {
+    background-color: #00f2fe;
+}
+
+/* ===== Cards ===== */
+.cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.card {
+    flex: 1 1 200px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.card h3 {
+    margin-bottom: 10px;
+    color: #4facfe;
+}
+
+.card p {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* ===== Charts and Map ===== */
+.charts {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.chart-container {
+    flex: 1 1 400px;
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+#map {
+    width: 100%;
+    height: 400px;
+    border-radius: 10px;
+}
+
+/* ===== Forms and Tables ===== */
 .form-container {
     max-width: 450px;
-    margin: 80px auto;
+    margin: 50px auto;
     padding: 35px;
     background-color: #ffffff;
     border-radius: 12px;
@@ -252,7 +319,6 @@ form button:hover {
     background-color: #00f2fe;
 }
 
-/* User Home Container (Profile Details) */
 .home-container {
     max-width: 600px;
     margin: 50px auto;
@@ -263,34 +329,450 @@ form button:hover {
     text-align: center;
 }
 
-/* --- BACK NAVIGATION BAR STYLE (Fixed Positioning) --- */
+#searchResults {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+/* ============================================================
+   ===== Redesigned Passenger Dashboard (Updated Font Sizes) =====
+   ============================================================ */
+
+body.passenger-dashboard {
+    background: linear-gradient(to right, #4facfe, #ffffff);
+    overflow: hidden;
+}
+
+/* Dashboard Wrapper */
+.dashboard-wrapper {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 100vh;
+    padding: 0 60px;
+    box-sizing: border-box;
+}
+
+/* Left Section */
+.dashboard-left {
+    flex: 1;
+    max-width: 550px;
+}
+
+.dashboard-left h1 {
+    color: #4facfe;
+    font-size: 3.2rem; /* increased */
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.dashboard-left p {
+    font-size: 1.4rem; /* increased */
+    color: #222b45;
+    margin-bottom: 45px;
+    line-height: 1.6;
+}
+
+.dashboard-buttons {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+.dashboard-buttons button {
+    padding: 16px 36px; /* bigger buttons */
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.15rem; /* increased */
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+/* Buttons */
+.search-btn {
+    background-color: #4facfe;
+    color: white;
+}
+
+.search-btn:hover {
+    background-color: #00f2fe;
+    color: #222b45;
+}
+
+.view-btn {
+    background-color: #4facfe;
+    color: white;
+}
+
+.view-btn:hover {
+    background-color: #00f2fe;
+    color: 222b45;
+}
+
+/* Right Side (Circle Image) */
+.dashboard-right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.circle-img {
+    width: 350px; /* slightly larger */
+    height: 350px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 6px solid #4facfe;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    transition: transform 0.4s ease;
+}
+
+.circle-img:hover {
+    transform: scale(1.05);
+}
+
+.circle-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Logout Button */
+.logout-btn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+    z-index: 10;
+}
+
+.logout-btn:hover {
+    background-color: red;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .dashboard-wrapper {
+        flex-direction: column-reverse;
+        padding: 40px 20px;
+        text-align: center;
+    }
+
+    .dashboard-left h1 {
+        font-size: 2.4rem;
+    }
+
+    .dashboard-left p {
+        font-size: 1.1rem;
+    }
+
+    .circle-img {
+        width: 250px;
+        height: 250px;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-buttons {
+        justify-content: center;
+    }
+
+    .logout-btn {
+        top: 15px;
+        right: 15px;
+    }
+}
+/* ======================================================
+   USER HOME PAGE STYLING
+   ====================================================== */
+
+.home-container {
+    max-width: 650px;
+    margin: 100px auto;
+    background-color: #ffffff;
+    padding: 40px 50px;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.home-container h1 {
+    color: #4facfe;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.home-container p {
+    font-size: 1.2rem;
+    color: #222b45;
+    margin-bottom: 25px;
+}
+
+/* User details box */
+.user-details {
+    background-color: #f0f8ff;
+    border-left: 6px solid #4facfe;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.user-details h3 {
+    color: #4facfe;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.user-details ul {
+    list-style: none;
+    padding: 0;
+}
+
+.user-details li {
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 1.05rem;
+    color: #333;
+}
+
+.user-details li:last-child {
+    border-bottom: none;
+}
+
+.user-details strong {
+    color: #0072ff;
+}
+
+/* Logout button */
+#logoutBtn {
+    background: red;
+    color: #222;
+    padding: 12px 35px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(255, 209, 102, 0.4);
+}
+
+#logoutBtn:hover {
+    background: red;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 209, 102, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .home-container {
+        padding: 25px 30px;
+    }
+
+    .home-container h1 {
+        font-size: 2rem;
+    }
+
+    .user-details {
+        padding: 20px;
+    }
+
+    #logoutBtn {
+        width: 100%;
+    }
+}
+/* === DRIVER DASHBOARD STYLE === */
+body.driver-dashboard {
+    background: white;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Back Navigation */
+/* Back Navigation */
 .back-nav {
-    position: fixed;
-    top: 25px;
-    left: 20px;
-    z-index: 1000;
+    position: absolute;
+    top: 20px;
+    left: 25px;
+    z-index: 10;
 }
 
 .back-nav a {
     text-decoration: none;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background-color: #4facfe;
-    color: white;
-    font-size: 0.9rem;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.2s ease;
+    color: #ffffff; /* white text */
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: opacity 0.3s ease;
 }
 
 .back-nav a:hover {
-    background-color: #00f2fe;
+    color: #ffffff; /* stays white on hover */
+    opacity: 0.8;   /* subtle fade effect instead of color change */
 }
 
-/* Style for Search Results Container (Allows list to scroll internally) */
-/* Style for Search Results Container */
-#searchResults {
-    max-height: 400px; /* Limit the display height */
-    overflow-y: auto; /* CRITICAL FIX: Add vertical scrollbar if content overflows */
-    padding-right: 10px; /* Add some space if the scrollbar appears */
+
+/* Logout Button */
+.logout-btn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+    z-index: 10;
+}
+
+.logout-btn:hover {
+    background-color: #ff4b4b;
+}
+
+/* Dashboard Wrapper */
+.dashboard-wrapper {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 100vh;
+    padding: 0 60px;
+    box-sizing: border-box;
+}
+
+/* Left Section */
+.dashboard-left {
+    flex: 1;
+    max-width: 550px;
+}
+
+.dashboard-left h1 {
+    color: #4facfe;
+    font-size: 3rem;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.dashboard-left p {
+    font-size: 1.3rem;
+    color: #222b45;
+    margin-bottom: 40px;
+    line-height: 1.6;
+}
+
+/* Buttons Layout */
+.dashboard-buttons {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+.dashboard-buttons button {
+    padding: 16px 36px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+/* Button Styles */
+.post-btn {
+    background-color: #4facfe;
+    color: white;
+}
+
+.post-btn:hover {
+    background-color: #00f2fe;
+    color: #222b45;
+}
+
+.view-btn {
+    background-color: #4facfe;
+    color: white;
+}
+
+.view-btn:hover {
+    background-color: #00f2fe;
+    color: #222b45;
+}
+
+/* Right Side (Circle Image) */
+.dashboard-right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.circle-img {
+    width: 350px;
+    height: 350px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 6px solid #4facfe;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    transition: transform 0.4s ease;
+}
+
+.circle-img:hover {
+    transform: scale(1.05);
+}
+
+.circle-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .dashboard-wrapper {
+        flex-direction: column-reverse;
+        padding: 40px 20px;
+        text-align: center;
+    }
+
+    .dashboard-left h1 {
+        font-size: 2.4rem;
+    }
+
+    .dashboard-left p {
+        font-size: 1.1rem;
+    }
+
+    .circle-img {
+        width: 250px;
+        height: 250px;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-buttons {
+        justify-content: center;
+    }
+
+    .logout-btn {
+        top: 15px;
+        right: 15px;
+    }
+
+    .back-nav {
+        top: 15px;
+        left: 15px;
+    }
 }

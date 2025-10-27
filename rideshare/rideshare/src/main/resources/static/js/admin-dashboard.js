@@ -1,6 +1,10 @@
 // In src/main/resources/static/js/admin-dashboard.js
 
-// Navigate to onboard page when "Onboard New User" button is clicked
+let allUsers = [];
+let userRoleChartInstance = null; // Variable to hold the chart instance
+
+// =================== BUTTON AND NAVIGATION LOGIC ===================
+
 const onboardBtn = document.getElementById("onboardBtn");
 if (onboardBtn) {
   onboardBtn.addEventListener("click", () => {
@@ -8,93 +12,158 @@ if (onboardBtn) {
   });
 }
 
-// =================== LOGIC TO FETCH AND DISPLAY USERS ===================
+document.addEventListener('DOMContentLoaded', () => {
+    loadUsers();
+
+    const searchInput = document.getElementById('searchUserInput');
+    const roleFilter = document.getElementById('roleFilter');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', updateDashboard);
+    }
+    if (roleFilter) {
+        roleFilter.addEventListener('change', updateDashboard);
+    }
+
+    // --- DYNAMIC NAVIGATION LOGIC ---
+    const navUsers = document.getElementById('navUsers');
+    const navSettings = document.getElementById('navSettings');
+
+    if (navUsers) {
+        navUsers.addEventListener('click', () => {
+            Swal.fire({
+                icon: 'info',
+                title: 'Users Page',
+                text: 'This page would display the full user list table (Pending: Implement user-list.html).'
+            });
+        });
+    }
+
+    if (navSettings) {
+        navSettings.addEventListener('click', () => {
+            Swal.fire({
+                icon: 'info',
+                title: 'Settings Page',
+                text: 'This page is for administrative settings (Pending: Implement settings.html).'
+            });
+        });
+    }
+    // ------------------------------------
+});
+
+// =================== LOGIC: CHART RENDERING ===================
+
+function renderChart(driverCount, passengerCount, adminCount) {
+    const ctx = document.getElementById('userRoleChart');
+
+    // Destroy existing chart if it exists
+    if (userRoleChartInstance) {
+        userRoleChartInstance.destroy();
+    }
+
+    // Create a new Pie Chart instance
+    userRoleChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Drivers', 'Passengers', 'Admins'],
+            datasets: [{
+                label: 'User Role Distribution',
+                data: [driverCount, passengerCount, adminCount],
+                backgroundColor: [
+                    '#43e97b', // Green for Drivers (DR)
+                    '#f76b1c', // Orange for Passengers (PS)
+                    '#6f54ff'  // Purple for Admins (US)
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#333' // Chart.js legend text color for light dashboard
+                    }
+                },
+                title: {
+                    display: false,
+                }
+            }
+        }
+    });
+}
+
+// =================== LOGIC: CALCULATE AND DISPLAY ROLE COUNTS ===================
+
+function updateCounts(users, isFiltered = false) {
+    // 1. Calculate counts for all roles (based on the provided 'users' list)
+    const driverCount = users.filter(user => user.roleType === 'DRIVER').length;
+    const passengerCount = users.filter(user => user.roleType === 'PASSENGER').length;
+    const adminCount = users.filter(user => user.roleType === 'ADMIN').length;
+    const totalMatchingUsers = users.length;
+
+    // 2. Update the HTML badges with FILTERED/MATCHING counts
+    document.getElementById('usBadgeCount').textContent = totalMatchingUsers;
+    document.getElementById('driverCount').textContent = driverCount;
+    document.getElementById('passengerCount').textContent = passengerCount;
+
+    // 3. The chart and overall header count always reflect the total system state.
+    if (!isFiltered) {
+        document.getElementById('totalUsersCountDisplay').textContent = allUsers.length;
+        renderChart(driverCount, passengerCount, adminCount);
+    }
+}
+
+const getCurrentFilteredUsers = () => {
+    const searchTerm = document.getElementById('searchUserInput').value.toLowerCase();
+    const role = document.getElementById('roleFilter').value;
+
+    return allUsers.filter(user => {
+        const matchesSearch = user.name.toLowerCase().includes(searchTerm) || user.email.toLowerCase().includes(searchTerm);
+        const matchesRole = !role || user.roleType === role;
+        return matchesSearch && matchesRole;
+    });
+};
+
+function updateDashboard() {
+    const filteredUsers = getCurrentFilteredUsers();
+    updateCounts(filteredUsers, true);
+}
+
 
 async function loadUsers() {
-    // Check if BASE_URL exists just in case (optional, but good practice)
     if (typeof BASE_URL === 'undefined') {
         console.error("Critical: BASE_URL is still undefined.");
         alert("Error loading dependencies. Please clear cache and refresh.");
         return;
     }
 
-    const usersTableBody = document.querySelector("#usersTable tbody");
-    if (!usersTableBody) return;
-
     try {
-        // Use the reusable getData function from common.js
         const users = await getData("/admin/users");
+        allUsers = Array.isArray(users) ? users : [];
 
-        // Clear the existing content before populating or adding the message
-        usersTableBody.innerHTML = '';
-
-        if (Array.isArray(users) && users.length > 0) {
-            // Case 1: Users exist, populate the table
-            users.forEach(user => {
-                const row = usersTableBody.insertRow();
-
-                // Populate standard cells (Update this section if you fully implemented 8 columns in the HTML/previous steps)
-                row.insertCell().textContent = user.id;
-                row.insertCell().textContent = user.name;
-                row.insertCell().textContent = user.email;
-                row.insertCell().textContent = user.contactNumber;
-                row.insertCell().textContent = user.roleType;
-
-                // The original file only showed 6 cells, but assuming you implemented the full 8-column table:
-                row.insertCell().textContent = user.roleType === 'DRIVER' ? (user.vehicleDetails || 'N/A') : 'N/A';
-                row.insertCell().textContent = user.roleType === 'DRIVER' ? (user.driverLicenseNumber || 'N/A') : 'N/A';
-                row.insertCell().textContent = user.roleType === 'PASSENGER' ? (user.aadharNumber || 'N/A') : 'N/A';
-            });
-
-        } else if (Array.isArray(users) && users.length === 0) {
-            // Case 2: No users, display the "No data available" message
-            const row = usersTableBody.insertRow();
-            const cell = row.insertCell(0);
-
-            // Set colSpan to the total number of columns in your table (8 columns: ID, Name, Email, Contact, Role, Vehicle, License, Aadhar)
-            // If you only have 6 columns, change this to 6.
-            cell.colSpan = 8;
-
-            cell.textContent = "No data available.";
-            cell.style.textAlign = 'center'; // Optional: Center the text for a better look
-        }
+        updateCounts(allUsers, false);
 
     } catch (error) {
         console.error("Failed to load users:", error);
-        const row = usersTableBody.insertRow();
-        // Use the same colSpan here for error messages
-        row.insertCell(0).textContent = "Error loading user data.";
-        row.cells[0].colSpan = 8;
     }
 }
-// *** CRITICAL FIX: Ensure loadUsers runs only AFTER all scripts are ready ***
-document.addEventListener('DOMContentLoaded', loadUsers);
-window.addEventListener('load', loadUsers); // Double check for maximum compatibility
 
-// In src/main/resources/static/js/admin-dashboard.js
+// =================== LOGIC FOR LOGOUT/DELETE ===================
 
-// ... (Existing code for onboardBtn and loadUsers function)
-
-// =================== LOGIC FOR LOGOUT ===================
 const logoutAdminBtn = document.getElementById("logoutAdminBtn");
 if (logoutAdminBtn) {
     logoutAdminBtn.addEventListener("click", () => {
-        // Since there's no official admin token, we just redirect to the admin login page
         window.location.href = "admin-login.html";
     });
 }
 
-
-// In src/main/resources/static/js/admin-dashboard.js
-
-// ... (Existing code before the deletion logic)
-
-// =================== LOGIC FOR DELETING ALL USERS ===================
 const deleteAllUsersBtn = document.getElementById("deleteAllUsersBtn");
 if (deleteAllUsersBtn) {
     deleteAllUsersBtn.addEventListener("click", async () => {
 
-        // Use SweetAlert for confirmation
         const result = await Swal.fire({
             title: 'WARNING: Delete All Users?',
             text: 'Are you sure you want to delete ALL users? This action cannot be undone.',
@@ -112,18 +181,14 @@ if (deleteAllUsersBtn) {
         try {
             const resultText = await deleteData("/delete-all-users");
 
-            // SweetAlert for SUCCESS
             Swal.fire({
                 icon: 'success',
                 title: 'Deleted!',
                 text: resultText
             });
 
-            // Reload the user list to show an empty table
-            loadUsers();
+            loadUsers(); // Reload to update counts and chart
         } catch (error) {
-            // Note: The error alert is now handled by common.js, which should use SweetAlert.
-            // If you still need a specific local message, add it here:
             console.error("Error deleting users:", error);
         }
     });

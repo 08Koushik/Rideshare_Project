@@ -1,39 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Passenger Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
 
-<div class="dashboard-container">
-    <h2>Passenger Dashboard</h2>
-    <p>Welcome, Passenger! Find and book your next ride.</p>
+<!-- Back Button -->
+<div class="back-nav">
+    <a href="javascript:history.back()">&larr; Back</a>
+</div>
 
-    <div style="margin-bottom: 30px;">
-        <button id="searchRideBtn">Search for Rides</button>
-        <button id="logoutBtn">Logout</button>
+<!-- Logout Button -->
+<button class="logout-btn" id="logoutBtn">Logout</button>
+
+<!-- Main Dashboard Layout -->
+<div class="dashboard-wrapper">
+
+    <!-- Left Content -->
+    <div class="dashboard-left">
+        <h1>Passenger Dashboard</h1>
+        <p>Welcome, Passenger! Find and book your next ride.</p>
+        <div class="dashboard-buttons">
+            <button class="search-btn" id="searchRideBtn">Search for Rides</button>
+            <button class="view-btn" onclick="window.location.href='user-home.html'">View Profile Details</button>
+        </div>
     </div>
 
-<!--    <h3>Your Past Bookings</h3>-->
-<!--    <p class="message" style="color: #4facfe;"></p>-->
+    <!-- Right Circular Image -->
+    <div class="dashboard-right">
+        <div class="circle-img">
+            <img src="images/passenger.png" alt="Ride Image" />
+        </div>
+    </div>
 
-    <button style="margin-top: 20px;" onclick="window.location.href='user-home.html'">View Profile Details</button>
 </div>
-<script src="js/common.js"></script>
+
 <script>
+    // Navigation for search button
     document.getElementById("searchRideBtn").addEventListener("click", () => {
         window.location.href = "search-ride.html";
     });
+
+    // SweetAlert Logout
     document.getElementById("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem("loggedInUser");
-        window.location.href = "user-login.html";
+        Swal.fire({
+            title: "Logout Successful",
+            text: "You have been logged out successfully.",
+            icon: "success",
+            confirmButtonColor: "#4facfe",
+            confirmButtonText: "OK"
+        }).then(() => {
+            localStorage.removeItem("loggedInUser");
+            window.location.href = "user-login.html";
+        });
     });
 </script>
+
 </body>
 </html>

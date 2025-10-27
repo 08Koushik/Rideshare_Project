@@ -10,6 +10,3 @@ public class RideshareApplication {
 		SpringApplication.run(RideshareApplication.class, args);
 	}
 }
-
-
-

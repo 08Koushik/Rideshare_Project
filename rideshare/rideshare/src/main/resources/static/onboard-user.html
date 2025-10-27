@@ -108,15 +108,16 @@
       })
       .then(data => {
           // SweetAlert for SUCCESS
-          Swal.fire({
-                  icon: 'success',
-                  title: 'User Onboarded!',
-                  html: "User **'" + name + "'** added successfully!<br><br>" +
-                        "✅ The temporary password has been emailed to the user (" + email + ").<br>" +
-                        "Please inform the user to log in and reset their password immediately."
-              }).then(() => {
-                  window.location.href = "admin-dashboard.html";
-              });
+         Swal.fire({
+  icon: 'success',
+  title: 'User Onboarded!',
+  text: `User "${name}" has been added successfully.
+         The temporary password has been sent to ${email}.`,
+  confirmButtonText: 'OK'
+}).then(() => {
+  window.location.href = "admin-dashboard.html";
+});
+
       })
       .catch(error => {
           console.error("Error:", error);
