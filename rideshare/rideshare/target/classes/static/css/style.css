@@ -782,3 +782,23 @@ body.driver-dashboard {
         left: 15px;
     }
 }
+
+/* src/main/resources/static/css/style.css */
+
+/* Add this block to the end of the file */
+
+/* ===== NEW: Sign up Link Style for Login Page ===== */
+.register-link {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+.register-link a {
+    color: #4facfe; /* Uses the primary blue color */
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+.register-link a:hover {
+    color: #00f2fe;
+}

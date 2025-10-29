@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Onboard User - RideShare</title>
+  <title>Sign Up - RideShare</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -20,7 +20,7 @@
 <body>
 <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
 <div class="form-container">
-  <h2>Onboard New User</h2>
+  <h2>Sign Up for RideShare</h2>
   <form id="onboardForm">
     <label for="name">Name</label>
     <input type="text" id="name" name="name" required>
@@ -51,7 +51,7 @@
       <input type="text" id="aadhar" name="aadhar">
     </div>
 
-    <button type="submit">Add User</button>
+    <button type="submit">Sign Up</button>
   </form>
 </div>
 <script>
@@ -59,7 +59,6 @@
   const roleSelect = document.getElementById("role");
   const driverDiv = document.getElementById("driverDiv");
   const passengerDiv = document.getElementById("passengerDiv");
-  // Assuming BASE_URL is defined elsewhere (e.g., common.js)
 
   // Show role-specific fields
   roleSelect.addEventListener("change", () => {
@@ -100,8 +99,8 @@
           aadharNumber: aadharNumber
       };
 
-      // 3. Send the request (CRITICAL: Sending JSON)
-      fetch("http://localhost:8080/api/auth/admin/onboard", { // <-- NO query params!
+      // 3. Send the request (CRITICAL: Sending JSON) - UPDATED ENDPOINT
+      fetch("http://localhost:8080/api/auth/register", { // <-- Points to the public register endpoint
           method: "POST",
           headers: {
               "Content-Type": "application/json" // CRITICAL: Tell server to expect JSON
@@ -116,16 +115,15 @@
           return response.json();
       })
       .then(data => {
-          // SweetAlert for SUCCESS
+          // SweetAlert for SUCCESS - UPDATED REDIRECTION
          Swal.fire({
-  icon: 'success',
-  title: 'User Onboarded!',
-  text: `User "${name}" has been added successfully.
-         The temporary password has been sent to ${email}.`,
-  confirmButtonText: 'OK'
-}).then(() => {
-  window.location.href = "admin-dashboard.html";
-});
+          icon: 'success',
+          title: 'Registration Successful!',
+          text: `User "${name}" has been added. The temporary password has been sent to ${email}. Please proceed to login.`,
+          confirmButtonText: 'OK'
+        }).then(() => {
+          window.location.href = "user-login.html"; // Redirect to unified login page
+        });
 
       })
       .catch(error => {
@@ -133,14 +131,12 @@
           // SweetAlert for ERROR
           Swal.fire({
                   icon: 'error',
-                  title: 'Onboarding Failed',
+                  title: 'Sign Up Failed',
                   text: "Error adding user. Check console for details, and ensure your backend is running and expecting JSON."
               });
       });
   });
 </script>
 <script src="js/common.js"></script>
-<script src="js/admin.js"></script>
-
 </body>
 </html>

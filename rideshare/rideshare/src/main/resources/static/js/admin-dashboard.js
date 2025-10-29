@@ -156,7 +156,7 @@ async function loadUsers() {
 const logoutAdminBtn = document.getElementById("logoutAdminBtn");
 if (logoutAdminBtn) {
     logoutAdminBtn.addEventListener("click", () => {
-        window.location.href = "admin-login.html";
+        window.location.href = "user-login.html";
     });
 }
 

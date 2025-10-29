@@ -1,7 +1,9 @@
+// src/main/resources/static/js/user.js
+
 // BASE URL for backend API
 const BASE_URL = "http://localhost:8080/api/auth";
 
-// =================== USER LOGIN ===================
+// =================== UNIFIED LOGIN ===================
 const userLoginForm = document.getElementById("userLoginForm");
 if (userLoginForm) {
     userLoginForm.addEventListener("submit", async (e) => {
@@ -10,73 +12,81 @@ if (userLoginForm) {
         // --- CLEAN RETRIEVAL ---
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
+        const role = document.getElementById("role").value; // NEW: Get selected role
 
         // Check for empty values immediately
-        if (!email || !password) {
-            //alert("Please enter both email and password.");
+        if (!email || !password || !role) {
             Swal.fire({
                             icon: 'warning',
                             title: 'Required Fields',
-                            text: "Please enter both email and password."
+                            text: "Please enter both email and password, and select a login role."
                         });
             return;
         }
 
-        // Encode parameters for the URL
-        const fetchUrl = `${BASE_URL}/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+        let fetchUrl;
+
+        if (role === 'ADMIN') {
+            // Admin Login Endpoint (Admin controller expects query params)
+            fetchUrl = `${BASE_URL}/admin/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+        } else {
+            // User Login Endpoint (User controller expects query params)
+            fetchUrl = `${BASE_URL}/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+        }
+
         console.log("Attempting to fetch URL:", fetchUrl);
 
-       // In src/main/resources/static/js/user.js
+        try {
+            const response = await fetch(fetchUrl, { method: "POST" });
+            const resultText = await response.text();
 
-       // ... inside the addEventListener function ...
-               try {
-                   // ... (keep your email and password retrieval code)
+            if (role === 'ADMIN') {
+                // Admin login returns a plain success/fail string
+                if (resultText.includes("successfully")) {
+                    window.location.href = "admin-dashboard.html";
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Login Failed',
+                        text: "Invalid Admin credentials."
+                    });
+                }
+            } else {
+                // User login returns "FIRST_LOGIN" or a JSON User object
+                if (resultText.includes("FIRST_LOGIN")) {
+                    localStorage.setItem("userEmail", email);
+                    window.location.href = "reset-password.html";
+                } else if (resultText.trim().startsWith("{")) {
+                    const user = JSON.parse(resultText);
 
-                   const response = await fetch(fetchUrl, { method: "POST" });
+                    // *** CRITICAL FIX: SAVE THE FULL USER OBJECT ***
+                    localStorage.setItem("loggedInUser", JSON.stringify(user));
 
-                   // Read the full response body as text first to check for errors/exceptions
-                   // We use a safe way to handle the text response
-                   const resultText = await response.text();
-
-                   // Check for the special 'FIRST_LOGIN' string returned by the controller
-                   if (resultText.includes("FIRST_LOGIN")) {
-                       localStorage.setItem("userEmail", email);
-                       window.location.href = "reset-password.html";
-                   }
-                   else if (resultText.trim().startsWith("{")) {
-                                          const user = JSON.parse(resultText);
-
-                                          // *** CRITICAL FIX: SAVE THE FULL USER OBJECT ***
-                                          localStorage.setItem("loggedInUser", JSON.stringify(user));
-
-                                          // --- NEW ROLE-BASED REDIRECTION LOGIC ---
-                                          if (user.roleType === 'DRIVER') {
-                                               window.location.href = "driver-dashboard.html";
-                                          } else if (user.roleType === 'PASSENGER') {
-                                               window.location.href = "passenger-dashboard.html";
-                                          } else {
-                                               window.location.href = "user-home.html"; // Fallback for ADMIN/other roles
-                                          }
-                                          // ------------------------------------------
-                                      } else {
-                       // If it's another error message (e.g., "User not found!")
-                       //alert("Invalid credentials. Please try again. Backend response: " + resultText);
-                       Swal.fire({
-                                                   icon: 'error',
-                                                   title: 'Login Failed',
-                                                   text: "Invalid credentials. Please try again. Backend response: " + resultText
-                                              });
-                   }
-
-               } catch (err) {
-                   console.error("Fetch error:", err);
-                   //alert("Error connecting to server. Check console for details.");
-                   Swal.fire({
-                                           icon: 'error',
-                                           title: 'Connection Error',
-                                           text: "Error connecting to server. Check console for details."
-                                      });
-               }
-       // ...
+                    // --- NEW ROLE-BASED REDIRECTION LOGIC ---
+                    if (user.roleType === 'DRIVER') {
+                         window.location.href = "driver-dashboard.html";
+                    } else if (user.roleType === 'PASSENGER') {
+                         window.location.href = "passenger-dashboard.html";
+                    } else {
+                         window.location.href = "user-home.html"; // Fallback for other roles
+                    }
+                    // ------------------------------------------
+                } else {
+                    // If it's another error message (e.g., "User not found!" or "Incorrect password!")
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Login Failed',
+                        text: "Invalid credentials. Please try again. Backend response: " + resultText
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Fetch error:", err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: "Error connecting to server. Check console for details."
+            });
+        }
     });
 }

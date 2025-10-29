@@ -41,6 +41,25 @@ public class UserController {
                 request.getAadharNumber()
         );
     }
+    @PostMapping("/register")
+    public User registerUser(@RequestBody OnboardUserRequest request) {
+        // For self-registration, force the role away from 'ADMIN'.
+        String role = request.getRole();
+        if (role == null || role.equalsIgnoreCase("ADMIN")) {
+            // Default to Passenger if no role/Admin role is attempted
+            role = "PASSENGER";
+        }
+
+        return userService.onboardUser(
+                request.getName(),
+                request.getEmail(),
+                request.getContact(),
+                role,
+                request.getVehicle(),
+                request.getDriverLicenseNumber(),
+                request.getAadharNumber()
+        );
+    }
 
 
     @PostMapping("/login")

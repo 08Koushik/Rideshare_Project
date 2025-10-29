@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Login - RideShare</title>
+  <title>Login - RideShare</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -20,7 +20,7 @@
 <body>
 <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
 <div class="form-container">
-  <h2>User Login</h2>
+  <h2>Login to RideShare</h2>
   <form id="userLoginForm">
     <label for="email">Email</label>
     <input type="email" id="email" name="email" required>
@@ -28,42 +28,21 @@
     <label for="password">Password</label>
     <input type="password" id="password" name="password" required>
 
+    <label for="role">Login As</label>
+    <select id="role" name="role" required>
+      <option value="USER">User (Driver/Passenger)</option>
+      <option value="ADMIN">Admin</option>
+    </select>
+
     <button type="submit">Login</button>
   </form>
+
+  <p class="register-link">
+    Don't have an account? <a href="onboard-user.html">Sign up</a>
+  </p>
 </div>
 
-<!--<script>-->
-<!--  document.getElementById("userLoginForm").addEventListener("submit", function(e) {-->
-<!--      e.preventDefault();-->
-
-<!--      const email = document.getElementById("email").value;-->
-<!--      const password = document.getElementById("password").value;-->
-
-<!--      fetch("http://localhost:8080/api/auth/login?email=" + encodeURIComponent(email) +-->
-<!--          "&password=" + encodeURIComponent(password), {-->
-<!--              method: "POST"-->
-<!--          })-->
-<!--          .then(response => response.text())-->
-<!--          .then(data => {-->
-<!--              if (data.includes("first login") || data.includes("First login")) {-->
-<!--                  // Redirect to reset password page if first login-->
-<!--                  localStorage.setItem("userEmail", email); // Save email for reset-->
-<!--                  window.location.href = "reset-password.html";-->
-<!--              } else if (data.includes("success")) {-->
-<!--                  alert("Login successful!");-->
-<!--                  window.location.href = "user-home.html";-->
-<!--              } else {-->
-<!--                  alert("Invalid credentials. Please try again.");-->
-<!--              }-->
-<!--          })-->
-<!--          .catch(error => {-->
-<!--              console.error("Error:", error);-->
-<!--              alert("Error logging in. Check console for details.");-->
-<!--          });-->
-<!--  });-->
-<!--</script>-->
 <script src="js/common.js"></script>
 <script src="js/user.js"></script>
-
 </body>
 </html>
