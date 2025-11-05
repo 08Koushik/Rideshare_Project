@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Passenger Dashboard</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+          background: url('images/dashboard.png') no-repeat center center fixed;
+          background-size: cover;
+          margin: 0;
+          padding: 0;
+          font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Back Button -->
+<div class="back-nav">
+    <a href="javascript:history.back()">&larr; Back</a>
+</div>
+
+<!-- Logout Button -->
+<button class="logout-btn" id="logoutBtn">Logout</button>
+
+<!-- Main Dashboard Layout -->
+<div class="dashboard-wrapper">
+
+    <!-- Left Content -->
+    <div class="dashboard-left">
+        <h1>Passenger Dashboard</h1>
+        <p>Welcome, Passenger! Find and book your next ride.</p>
+        <div class="dashboard-buttons">
+            <button class="search-btn" id="searchRideBtn">Search for Rides</button>
+            <button class="view-btn" onclick="window.location.href='transaction-history.html'">View Transaction History</button>
+            <button class="view-btn" onclick="window.location.href='user-home.html'">View Profile Details</button>
+        </div>
+    </div>
+
+    <!-- Right Circular Image -->
+    <div class="dashboard-right">
+        <div class="circle-img">
+            <img src="images/passenger.png" alt="Ride Image" />
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Navigation for search button
+    document.getElementById("searchRideBtn").addEventListener("click", () => {
+        window.location.href = "search-ride.html";
+    });
+
+    // SweetAlert Logout
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+        Swal.fire({
+            title: "Logout Successful",
+            text: "You have been logged out successfully.",
+            icon: "success",
+            confirmButtonColor: "#4facfe",
+            confirmButtonText: "OK"
+        }).then(() => {
+            localStorage.removeItem("loggedInUser");
+            window.location.href = "user-login.html";
+        });
+    });
+</script>
+
+</body>
+</html>

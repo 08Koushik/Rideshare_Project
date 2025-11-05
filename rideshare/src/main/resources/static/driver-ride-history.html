@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Ride History - RideShare</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Borrowing table style from transaction-history.html */
+        #historyTableContainer table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #historyTableContainer th, #historyTableContainer td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        #historyTableContainer th {
+            background-color: #4facfe;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="home-container">
+    <h2>Your Posted Rides History</h2>
+    <p id="userNameDisplay"></p>
+
+    <div id="historyTableContainer">
+        <p>Loading rides...</p>
+    </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'DRIVER') {
+          Swal.fire('Access Denied', 'Please log in as a Driver.', 'warning').then(() => {
+              window.location.href = 'user-login.html';
+          });
+          return;
+      }
+      document.getElementById('userNameDisplay').textContent = `Showing posted rides for: ${LOGGED_IN_USER.name}`;
+      loadDriverRideHistory(LOGGED_IN_USER.id);
+    });
+
+    async function loadDriverRideHistory(driverId) {
+      const container = document.getElementById('historyTableContainer');
+      // CRITICAL: Call the new endpoint in RideController
+      const url = `http://localhost:8080/api/rides/driver/${driverId}/history`;
+
+      try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('Failed to fetch data.');
+
+          const rides = await response.json();
+
+          if (rides.length === 0) {
+              container.innerHTML = '<p>No rides posted yet.</p>';
+              return;
+          }
+
+          let tableHtml = `
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Date/Time</th>
+                          <th>Route</th>
+                          <th>Seats Offered</th>
+                          <th>Fare/Seat (₹)</th>
+                          <th>ID</th>
+                      </tr>
+                  </thead>
+                  <tbody>`;
+
+          rides.forEach(r => {
+              tableHtml += `
+                  <tr>
+                      <td>${new Date(r.dateTime).toLocaleString()}</td>
+                      <td>${r.source} to ${r.destination}</td>
+                      <td>${r.availableSeats}</td>
+                      <td>₹${r.farePerSeat ? r.farePerSeat.toFixed(2) : 'N/A'}</td>
+                      <td>${r.id}</td>
+                  </tr>`;
+          });
+
+          tableHtml += `</tbody></table>`;
+          container.innerHTML = tableHtml;
+
+      } catch (error) {
+          Swal.fire('Error', `Failed to load ride history: ${error.message}`, 'error');
+          container.innerHTML = '<p>Error loading ride data.</p>';
+      }
+    }
+</script>
+</body>
+</html>

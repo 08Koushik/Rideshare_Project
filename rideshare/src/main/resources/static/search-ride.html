@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search for Rides - RideShare</title>
+    <link rel="stylesheet" href="css/style.css"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+          background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
+          background-size: cover;
+          margin: 0;
+          padding: 0;
+          font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="form-container">
+    <h2>Search for Rides</h2>
+    <form id="searchRideForm">
+        <label for="searchSource">Source</label>
+        <input type="text" id="searchSource" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)" required>
+
+        <label for="searchDestination">Destination</label>
+        <input type="text" id="searchDestination" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)" required>
+
+        <label for="searchDate">Date</label>
+        <input type="date" id="searchDate" required>
+
+        <button type="submit">Search</button>
+    </form>
+
+    <div id="searchResults" style="margin-top: 20px;">
+    </div>
+
+    <datalist id="location-suggestions"></datalist>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    // 1. NEW: LocationIQ Autocomplete Logic
+    const LOCATIONIQ_API_KEY = 'pk.8c6dc49f1003f5c138f99ed064ad5a43';
+
+    // Debounce function to limit API calls while typing
+    let debounceTimer;
+    function fetchLocationSuggestions(inputElement) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            const query = inputElement.value.trim();
+            if (query.length < 3) return; // Only search after 3 characters
+
+            const datalist = document.getElementById('location-suggestions');
+
+            // LocationIQ API Endpoint for Autocomplete
+            // FIX APPLIED HERE: Use the variable LOCATIONIQ_API_KEY correctly
+            const url = `https://api.locationiq.com/v1/autocomplete?key=${LOCATIONIQ_API_KEY}&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // Clear old suggestions
+                datalist.innerHTML = '';
+
+                if (Array.isArray(data)) {
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        // Use the full address description as the suggestion
+                        option.value = item.display_name;
+                        datalist.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error("LocationIQ Autocomplete Error:", error);
+            }
+        }, 300); // 300ms delay
+    }
+
+    // 2. Existing Form Submission Logic
+    document.getElementById('searchRideForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // Only include fields that exist in the form, removing references to missing fields like priceRange, vehicleType, driverRating
+      const params = {
+        source: document.getElementById('searchSource').value,
+        destination: document.getElementById('searchDestination').value,
+        date: document.getElementById('searchDate').value,
+        // Removed price, vehicleType, rating fields as they are missing from the form in the provided content
+      };
+
+      // Store search parameters for the next page
+      sessionStorage.setItem('lastSearchParams', JSON.stringify(params));
+
+      // Navigate to results page
+      window.location.href = 'ride-results.html';
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - RideShare</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
+</head>
+<body>
+<!--<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>-->
+<div class="top-header">
+  <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+  <div class="app-logo">RideShare</div>
+</div>
+<div class="form-container">
+  <h2>Sign Up for RideShare</h2>
+  <form id="onboardForm">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="contact">Phone Number</label>
+    <input type="text" id="contact" name="contact" required>
+
+    <label for="role">Role</label>
+    <select id="role" name="role" required>
+      <option value="">Select Role</option>
+      <option value="DRIVER">Driver</option>
+      <option value="PASSENGER">Passenger</option>
+    </select>
+
+    <div id="driverDiv" style="display: none;">
+      <label for="vehicle">Vehicle Number</label>
+      <input type="text" id="vehicle" name="vehicle">
+
+      <label for="license">Driver License Number</label>
+      <input type="text" id="license" name="license">
+    </div>
+
+    <div id="passengerDiv" style="display: none;">
+      <label for="aadhar">Aadhar Number</label>
+      <input type="text" id="aadhar" name="aadhar">
+    </div>
+
+    <button type="submit">Sign Up</button>
+  </form>
+</div>
+<script>
+  // Define required elements
+  const roleSelect = document.getElementById("role");
+  const driverDiv = document.getElementById("driverDiv");
+  const passengerDiv = document.getElementById("passengerDiv");
+
+  // Show role-specific fields
+  roleSelect.addEventListener("change", () => {
+      // Hide all optional fields initially
+      driverDiv.style.display = "none";
+      passengerDiv.style.display = "none";
+
+      if (roleSelect.value === "DRIVER") {
+          driverDiv.style.display = "block";
+      } else if (roleSelect.value === "PASSENGER") {
+          passengerDiv.style.display = "block";
+      }
+  });
+
+  // Handle form submission
+  document.getElementById("onboardForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      // 1. Get field values (Use || "" for optional fields to ensure they are sent as empty strings, not 'undefined')
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const contact = document.getElementById("contact").value;
+      const role = document.getElementById("role").value;
+
+      // Get role-specific fields (defaulting to empty string if hidden)
+      const vehicle = document.getElementById("vehicle").value || "";
+      const driverLicenseNumber = document.getElementById("license").value || "";
+      const aadharNumber = document.getElementById("aadhar").value || "";
+
+      // 2. Collect data into a JavaScript object (to be sent as JSON DTO)
+      const requestBody = {
+          name: name,
+          email: email,
+          contact: contact,
+          role: role,
+          vehicle: vehicle,
+          driverLicenseNumber: driverLicenseNumber,
+          aadharNumber: aadharNumber
+      };
+
+      // 3. Send the request (CRITICAL: Sending JSON) - UPDATED ENDPOINT
+      fetch("http://localhost:8080/api/auth/register", { // <-- Points to the public register endpoint
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json" // CRITICAL: Tell server to expect JSON
+          },
+          body: JSON.stringify(requestBody) // Send the DTO object
+      })
+      .then(response => {
+          if (!response.ok) {
+              // Throw error to be caught below
+              throw new Error("Failed to onboard user. Check backend logs.");
+          }
+          return response.json();
+      })
+      .then(data => {
+          // SweetAlert for SUCCESS - UPDATED REDIRECTION
+         Swal.fire({
+          icon: 'success',
+          title: 'Registration Successful!',
+          text: `User "${name}" has been added. The temporary password has been sent to ${email}. Please proceed to login.`,
+          confirmButtonText: 'OK'
+        }).then(() => {
+          window.location.href = "user-login.html"; // Redirect to unified login page
+        });
+
+      })
+      .catch(error => {
+          console.error("Error:", error);
+          // SweetAlert for ERROR
+          Swal.fire({
+                  icon: 'error',
+                  title: 'Sign Up Failed',
+                  text: "Error adding user. Check console for details, and ensure your backend is running and expecting JSON."
+              });
+      });
+  });
+</script>
+<script src="js/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ride Search Results</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <style>
+    /* ... (Your existing CSS styles remain here, copied from the uploaded file) ... */
+
+    /* ===== Global Page Style ===== */
+    body {
+      font-family: 'Poppins', Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    /* ===== Back Button ===== */
+    .back-nav {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+
+    .back-nav a {
+      background-color: #3399ff;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 15px;
+      transition: background-color 0.3s ease;
+    }
+
+    .back-nav a:hover {
+      background-color: #0073e6;
+    }
+
+    /* ===== Main Container ===== */
+    .form-container {
+      width: 90%;
+      max-width: 1000px; /* Increased max-width for extra columns */
+      background: #fff;
+      margin: 80px auto;
+      border-radius: 10px;
+      padding: 25px 35px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ===== Headings ===== */
+    h2 {
+      text-align: center;
+      color: #007bff;
+      margin-bottom: 10px;
+      font-size: 26px;
+    }
+
+    h3 {
+      color: #333;
+      margin-top: 2:0px;
+      text-align: left;
+    }
+
+    /* ===== Paragraphs ===== */
+    p {
+      color: #555;
+      text-align: center;
+      margin: 5px 0;
+    }
+
+    /* ===== Table Styles ===== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 15px;
+    }
+
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #007bff;
+      color: #fff;
+      font-weight: normal;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    /* ===== Buttons ===== */
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .small-button {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    /* ===== New Search Button ===== */
+    .form-container button {
+      display: inline-block;
+      margin-top: 15px;
+    }
+
+    /* ===== SweetAlert Font ===== */
+    .swal2-popup {
+      font-size: 15px !important;
+    }
+  </style>
+</head>
+
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&larr; Back</a></div>
+
+<div class="form-container">
+  <h2>Ride Search Results</h2>
+  <p id="searchSummary">Loading search results...</p>
+
+  <div id="resultsContainer">
+    <p>A table of results will be displayed here.</p>
+  </div>
+
+  <button onclick="window.location.href='search-ride.html'">New Search</button>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+  // IMPORTANT: Use the Publishable Key from application.properties
+  const STRIPE_PUBLISHABLE_KEY = 'pk_test_51SPKdwQ7MCytR2QbudyenKYU4G0OviOTr5DnMKoxFMduzozaKUgjeKgDgV9tHOTDrk47UBJg1KAc7Cw44z87Yvtd00JIdFHXBN';
+  const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+
+  const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+
+  // Global state for Payment Element
+  let elements;
+
+  document.addEventListener('DOMContentLoaded', loadSearchResults);
+
+  // --- loadSearchResults function (Existing code) ---
+  async function loadSearchResults() {
+      const resultsDiv = document.getElementById('resultsContainer');
+      const summaryP = document.getElementById('searchSummary');
+      const storedParams = sessionStorage.getItem('lastSearchParams');
+
+      if (!storedParams) {
+          summaryP.textContent = "No recent search performed.";
+          resultsDiv.innerHTML = '<p>Please go back and perform a search.</p>';
+          return;
+      }
+
+      const params = JSON.parse(storedParams);
+
+      summaryP.innerHTML = `Searching for rides from <strong>${params.source}</strong> to <strong>${params.destination}</strong>.`;
+      resultsDiv.innerHTML = '<p>Loading rides...</p>';
+
+      // Note: The URL still includes filters which are not yet implemented in the backend logic provided.
+      const url = `http://localhost:8080/api/rides/search?source=${encodeURIComponent(params.source)}&destination=${encodeURIComponent(params.destination)}&date=${encodeURIComponent(params.date)}&price=${params.price}&type=${params.vehicleType}&rating=${params.rating}`;
+
+      try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(response.statusText || 'Failed to retrieve data.');
+          // CRITICAL: response now contains the enhanced DTO data (List<RideDetailsResponse>)
+          const rides = await response.json();
+
+          let tableHtml = `
+              <h3>Found ${rides.length} Ride(s)</h3>
+              <table>
+                  <thead><tr>
+                      <th>Source</th>
+                      <th>Destination</th>
+                      <th>Driver/Vehicle</th> <th>Date/Time</th>
+                      <th>Seats Left</th>
+                      <th>Fare/Seat (₹)</th>
+                      <th>Action</th>
+                  </tr></thead>
+                  <tbody>`;
+
+          if (rides.length === 0) {
+               // colspan changed from 6 to 7
+               tableHtml += '<tr><td colspan="7" style="text-align:center;">No rides match your search criteria.</td></tr>';
+          } else {
+              rides.forEach(ride => {
+                  tableHtml += `
+                      <tr>
+                          <td>${ride.source}</td>
+                          <td>${ride.destination}</td>
+                          <td>
+                            <strong>Driver:</strong> ${ride.driverName}<br>
+                            <strong>Vehicle No:</strong> ${ride.vehicleNumber}
+                          </td>
+                          <td>${ride.dateTime.replace('T', ' ')}</td>
+                          <td>${ride.availableSeats}</td>
+                          <td>${ride.farePerSeat.toFixed(2)}</td>
+                          <td>
+                            <button class="small-button" onclick="showDriverDetails('${encodeURIComponent(JSON.stringify(ride))}')">Details</button>
+                            <button class="small-button" onclick="bookRide(${ride.rideId}, 1, ${ride.farePerSeat})">Book Seat</button>
+                          </td>
+                      </tr>`;
+              });
+          }
+
+          tableHtml += `</tbody></table>`;
+          resultsDiv.innerHTML = tableHtml;
+
+          Swal.fire('Search Complete', `Found ${rides.length} rides.`, 'success');
+      } catch (error) {
+          Swal.fire('Connection Error', `Failed to load search results: ${error.message}`, 'error');
+          resultsDiv.innerHTML = '<h3>Error</h3><p>Failed to connect to backend or retrieve data.</p>';
+      }
+  }
+
+  // --- showDriverDetails function (Existing code) ---
+  function showDriverDetails(rideJsonString) {
+      // Decode and parse the JSON string passed from the onclick attribute
+      const ride = JSON.parse(decodeURIComponent(rideJsonString));
+
+      const imageUrl = ride.vehicleImageReference ?
+                       ride.vehicleImageReference :
+                       '/images/default_car.png';
+
+      // Conditional HTML for image display
+      const imageHtml = ride.vehicleImageReference ? `
+        <img src="${imageUrl}" alt="Vehicle Image" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;">
+      ` : `<p style="color:gray; font-style:italic;">No vehicle image uploaded.</p>`;
+
+
+      Swal.fire({
+          title: 'Driver & Vehicle Details',
+          html: `
+              <div style="text-align: left; max-width: 400px; margin: 0 auto;">
+                  ${imageHtml}
+
+                  <h4 style="color:#007bff; margin-bottom: 10px;">Driver Information</h4>
+                  <p><strong>Name:</strong> ${ride.driverName}</p>
+                  <p><strong>Contact:</strong> ${ride.driverContact}</p>
+                  <p><strong>License No:</strong> ${ride.driverLicenseNumber || 'N/A'}</p>
+                  <hr style="margin: 15px 0;">
+                  <h4 style="color:#007bff; margin-bottom: 10px;">Vehicle Information</h4>
+                  <p><strong>Vehicle Name:</strong> ${ride.vehicleName || 'N/A'}</p>
+                  <p><strong>Vehicle Type:</strong> ${ride.vehicleType || 'N/A'}</p>
+                  <p><strong>Vehicle No:</strong> ${ride.vehicleNumber}</p>
+              </div>
+          `,
+          icon: 'info',
+          confirmButtonText: 'Close'
+      });
+  }
+
+  // --- NEW/REPLACED FUNCTION: Handles Payment Element Flow ---
+  async function bookRide(rideId, seats, farePerSeat) {
+      if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'PASSENGER') {
+          Swal.fire('Access Denied', 'Please log in as a Passenger to book seats.', 'warning');
+          return;
+      }
+
+      const totalCost = (farePerSeat * seats).toFixed(2);
+
+      // 1. CALL BACKEND to create the Payment Intent and get the Client Secret
+      const intentUrl = `http://localhost:8080/api/booking/create-intent?rideId=${rideId}&seats=${seats}`;
+
+      try {
+          const intentResponse = await fetch(intentUrl, { method: 'POST' });
+          if (!intentResponse.ok) {
+              const errorText = await intentResponse.text();
+              throw new Error(errorText || 'Failed to initialize payment.');
+          }
+          const { clientSecret } = await intentResponse.json();
+
+          // 2. Show Payment Element modal
+          const { value: paymentIntentId, isConfirmed } = await Swal.fire({
+              title: `Confirm Booking: ₹${totalCost}`,
+              html: `
+                  <p style="text-align:center; font-size:1.0em; margin-bottom: 20px;">
+                      Enter details below to confirm payment for ${seats} seat(s).
+                  </p>
+                  <div id="payment-element" style="min-height: 200px;">
+                      </div>
+              `,
+              icon: 'info',
+              showCancelButton: true,
+              confirmButtonText: 'Submit Payment',
+              // CRITICAL: Initialize Payment Element when modal opens
+              didOpen: () => {
+                  elements = stripe.elements({ clientSecret });
+                  const paymentElement = elements.create('payment', {
+                      defaultValues: {
+                          billingDetails: {
+                              name: LOGGED_IN_USER.name,
+                              email: LOGGED_IN_USER.email,
+                          },
+                      },
+                  });
+                  paymentElement.mount('#payment-element');
+              },
+              // CRITICAL: Handle payment confirmation when "Submit Payment" is clicked
+              preConfirm: async () => {
+                  const { error, paymentIntent } = await stripe.confirmPayment({
+                      elements,
+                      confirmParams: {
+                          // Return URL is mandatory for handling 3DS/redirects
+                          return_url: "http://localhost:8080/ride-results.html",
+                      },
+                      redirect: 'if_required',
+                  });
+
+                  if (error) {
+                      // Display validation/network errors back in the modal
+                      Swal.showValidationMessage(`Payment failed: ${error.message}`);
+                      return false;
+                  }
+
+                  if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_action') {
+                      // Return the Payment Intent ID to the booking function
+                      return paymentIntent.id;
+                  } else {
+                       Swal.showValidationMessage(`Payment status: ${paymentIntent.status}`);
+                       return false;
+                  }
+              },
+          });
+
+          // 3. Final Booking Confirmation (Handles success or return from 3DS redirect)
+          if (isConfirmed && paymentIntentId) {
+              // Call the final booking endpoint, using the PaymentIntent ID
+              const bookingUrl = `http://localhost:8080/api/booking/book?paymentMethodId=${encodeURIComponent(paymentIntentId)}`;
+
+              const finalBookingResponse = await fetch(bookingUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      rideId: rideId,
+                      passengerId: LOGGED_IN_USER.id,
+                      seatsBooked: seats,
+                  })
+              });
+
+              const resultText = await finalBookingResponse.text();
+
+              // IMPORTANT: The server may return STRIPE_3DS_REQUIRED: redirectUrl
+              if (resultText && resultText.startsWith('STRIPE_3DS_REQUIRED:')) {
+                    const redirectUrl = resultText.substring('STRIPE_3DS_REQUIRED:'.length);
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Payment Redirection Required',
+                        text: 'You will be redirected to your bank to complete 3D Secure authentication.',
+                        confirmButtonText: 'Continue to Bank'
+                    }).then(() => {
+                        window.location.href = redirectUrl; // Redirect the user!
+                    });
+              } else if (finalBookingResponse.ok) {
+                  Swal.fire('Booking Success!', resultText, 'success').then(() => {
+                      loadSearchResults();
+                  });
+              } else {
+                  Swal.fire('Booking Failed', resultText || 'Server error during booking.', 'error');
+              }
+          }
+      } catch (error) {
+          console.error("Payment flow error:", error);
+          // Catch errors from the initial create-intent call
+          Swal.fire('Error', `Failed to start payment flow: ${error.message}`, 'error');
+      }
+  }
+</script>
+</body>
+</html>

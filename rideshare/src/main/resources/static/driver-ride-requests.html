@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ride Requests - RideShare</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* Basic table style for ride requests */
+    #requestsTableContainer table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    #requestsTableContainer th, #requestsTableContainer td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+    }
+    #requestsTableContainer th {
+        background-color: #4facfe;
+        color: white;
+    }
+    .status-BOOKED { color: green; font-weight: bold; }
+    .status-REQUESTED { color: orange; font-weight: bold; }
+    .status-ACCEPTED { color: #007bff; font-weight: bold; }
+    .status-DENIED { color: red; font-weight: bold; }
+
+    .action-btn-accept { background-color: #4CAF50; color: white; margin-right: 5px;}
+    .action-btn-deny { background-color: #f44336; color: white; }
+  </style>
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="home-container">
+  <h2>Pending Ride Requests & Bookings</h2>
+  <p id="driverNameDisplay"></p>
+
+  <div id="requestsTableContainer">
+    <p>Loading requests...</p>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+  // UPDATED: Base URL now points to the Booking Controller
+  const BASE_URL = "http://localhost:8080/api/booking";
+  const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'DRIVER') {
+        Swal.fire('Access Denied', 'Please log in as a Driver.', 'warning').then(() => {
+            window.location.href = 'user-login.html';
+        });
+        return;
+    }
+    document.getElementById('driverNameDisplay').textContent = `Showing requests for: ${LOGGED_IN_USER.name}`;
+    loadRideRequests(LOGGED_IN_USER.id);
+  });
+
+  // --- Core Functions for Accept/Deny ---
+
+  async function processRequest(bookingId, newStatus) {
+      const action = newStatus === 'ACCEPTED' ? 'Accept' : 'Deny';
+
+      const confirmation = await Swal.fire({
+          title: `${action} Request?`,
+          text: `Are you sure you want to ${action.toLowerCase()} this ride request?`,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: `Yes, ${action} it!`,
+          confirmButtonColor: newStatus === 'ACCEPTED' ? '#4CAF50' : '#f44336'
+      });
+
+      if (!confirmation.isConfirmed) {
+          return;
+      }
+
+      // --- REAL API CALL to update status ---
+      try {
+          // Calls POST /api/booking/{bookingId}/status?status={newStatus}
+          const url = `${BASE_URL}/${bookingId}/status?status=${newStatus}`;
+          const response = await fetch(url, { method: 'POST' });
+
+          if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(errorText || `Failed to update status to ${newStatus}.`);
+          }
+
+          Swal.fire('Success!', `Request ID ${bookingId} has been ${newStatus.toLowerCase()}!`, 'success');
+          loadRideRequests(LOGGED_IN_USER.id); // Reload table to reflect new status
+      } catch (error) {
+           Swal.fire('Error', `Failed to ${action.toLowerCase()} request: ${error.message}`, 'error');
+      }
+  }
+
+  function acceptRequest(bookingId) {
+      processRequest(bookingId, 'ACCEPTED');
+  }
+
+  function denyRequest(bookingId) {
+      processRequest(bookingId, 'DENIED');
+  }
+
+  async function loadRideRequests(driverId) {
+    const container = document.getElementById('requestsTableContainer');
+    container.innerHTML = '<p>Loading requests...</p>';
+
+    // --- REAL API CALL to fetch requests for the driver ---
+    // Calls GET /api/booking/driver/{driverId}/requests
+    const url = `${BASE_URL}/driver/${driverId}/requests`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch ride requests from the server.');
+
+        const requests = await response.json();
+
+        if (requests.length === 0) {
+            container.innerHTML = '<p>No pending ride requests or bookings found.</p>';
+            return;
+        }
+
+        let tableHtml = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Passenger Name</th>
+                        <th>Contact</th>
+                        <th>Seats</th>
+                        <th>Route</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        requests.forEach(r => {
+            // Status classes rely on the exact status string from the backend (e.g., BOOKED, ACCEPTED)
+            const statusClass = `status-${r.status}`;
+
+            let actionButtons = '';
+            // Only show Accept/Deny buttons for REQUESTED bookings
+            if (r.status === 'REQUESTED') {
+                actionButtons = `
+                    <button class="small-button action-btn-accept" onclick="acceptRequest(${r.bookingId})">Accept</button>
+                    <button class="small-button action-btn-deny" onclick="denyRequest(${r.bookingId})">Deny</button>
+                `;
+            } else if (r.status === 'BOOKED' || r.status === 'ACCEPTED') {
+                actionButtons = 'Confirmed';
+            } else {
+                actionButtons = r.status;
+            }
+
+            tableHtml += `
+                <tr>
+                    <td><span class="${statusClass}">${r.status}</span></td>
+                    <td>${r.passengerName}</td>
+                    <td>${r.passengerContact}</td>
+                    <td>${r.seats}</td>
+                    <td>${r.source} &rarr; ${r.destination}</td>
+                    <td>
+                        ${actionButtons}
+                    </td>
+                </tr>`;
+        });
+
+        tableHtml += `</tbody></table>`;
+        container.innerHTML = tableHtml;
+    } catch (error) {
+        Swal.fire('Error', `Failed to load ride requests: ${error.message}`, 'error');
+        container.innerHTML = '<p>Error loading ride request data.</p>';
+    }
+  }
+</script>
+</body>
+</html>

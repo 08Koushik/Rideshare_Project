@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - RideShare</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    /* ===== Global Styles ===== */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', Arial, sans-serif;
+      background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ===== Back Button ===== */
+    .back-nav {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+
+    .back-nav a {
+      text-decoration: none;
+      color: #fff;
+      background: rgba(0, 102, 255, 0.7);
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: background 0.3s ease;
+    }
+
+    .back-nav a:hover {
+      background: rgba(0, 102, 255, 1);
+    }
+
+    /* ===== Transparent Login Container ===== */
+    .login-container {
+      width: 350px;
+      padding: 40px 30px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      color: #fff;
+    }
+
+    .login-container h2 {
+      margin-bottom: 25px;
+      font-size: 1.8em;
+      color: #4da6ff;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.9em;
+      color: #f0f0f0;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      font-size: 1em;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #4da6ff;
+      color: white;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #1a8cff;
+    }
+
+    .message {
+      margin-top: 15px;
+      font-size: 0.9em;
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+<!--<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>-->
+<div class="top-header">
+  <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+  <div class="app-logo">RideShare</div>
+</div>
+
+<div class="login-container">
+  <h2>Admin Login</h2>
+  <form id="adminLoginForm">
+    <div class="form-group">
+      <label for="adminEmail">Email</label>
+      <input type="email" id="adminEmail" placeholder="Enter your email" required>
+    </div>
+    <div class="form-group">
+      <label for="adminPassword">Password</label>
+      <input type="password" id="adminPassword" placeholder="Enter your password" required>
+    </div>
+    <button type="submit">Login</button>
+  </form>
+  <p id="loginMessage" class="message"></p>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

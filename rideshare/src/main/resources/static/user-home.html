@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Home - RideShare</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+          background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
+          background-size: cover;
+          margin: 0;
+          padding: 0;
+          font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+<body>
+<!--<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>-->
+<div class="top-header">
+    <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+    <div class="app-logo">RideShare</div>
+</div>
+<div class="home-container">
+    <h1>Welcome to RideShare!</h1>
+    <p id="welcomeMessage"></p>
+    <div class="user-details">
+        <h3>Your Details:</h3>
+        <ul>
+            <li><strong>Name:</strong> <span id="userName"></span></li>
+            <li><strong>Email:</strong> <span id="userEmail"></span></li>
+            <li><strong>Contact:</strong> <span id="userContact"></span></li>
+            <li><strong>Role:</strong> <span id="userRole"></span></li>
+            <li id="vehicleField"><strong>Vehicle No.:</strong> <span id="userVehicle"></span></li>
+            <li id="licenseField" style="display: none;"><strong>License No.:</strong> <span id="userLicense"></span></li>
+            <li id="aadharField" style="display: none;"><strong>Aadhar No.:</strong> <span id="userAadhar"></span></li>
+        </ul>
+    </div>
+    <button id="logoutBtn">Logout</button>
+</div>
+
+<script>
+    // Fetch user info from localStorage
+    const user = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    if (!user) {
+<!--        alert("No user logged in. Please login first.");-->
+<!--        window.location.href = "user-login.html";-->
+Swal.fire({
+            icon: 'info',
+            title: 'Not Logged In',
+            text: "No user logged in. Please login first."
+        }).then(() => {
+            window.location.href = "user-login.html";
+        });
+    } else {
+        document.getElementById("welcomeMessage").innerText = `Hello, ${user.name}!`;
+        document.getElementById("userName").innerText = user.name;
+        document.getElementById("userEmail").innerText = user.email;
+        document.getElementById("userContact").innerText = user.contactNumber;
+        document.getElementById("userRole").innerText = user.roleType;
+
+        // Get new elements
+        const vehicleField = document.getElementById("vehicleField");
+        const licenseField = document.getElementById("licenseField");
+        const aadharField = document.getElementById("aadharField");
+
+        // Hide all optional fields initially
+        vehicleField.style.display = "none";
+        if (licenseField) licenseField.style.display = "none";
+        if (aadharField) aadharField.style.display = "none";
+
+
+        if (user.roleType === "DRIVER") {
+            // Display Driver fields
+            vehicleField.style.display = "list-item";
+            if (licenseField) licenseField.style.display = "list-item";
+
+            document.getElementById("userVehicle").innerText = user.vehicleDetails;
+            if (document.getElementById("userLicense")) document.getElementById("userLicense").innerText = user.driverLicenseNumber;
+
+        } else if (user.roleType === "PASSENGER") {
+            // Display Passenger field
+            if (aadharField) aadharField.style.display = "list-item";
+
+            if (document.getElementById("userAadhar")) document.getElementById("userAadhar").innerText = user.aadharNumber;
+        }
+    }
+
+    // Logout functionality
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("loggedInUser");
+        window.location.href = "user-login.html";
+    });
+</script>
+<script src="js/common.js"></script>
+<script src="js/user-home.js"></script>
+
+</body>
+</html>

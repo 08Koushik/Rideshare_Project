@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History - RideShare</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="home-container">
+    <h2>Transaction History</h2>
+    <p id="userNameDisplay"></p>
+
+    <div id="historyTableContainer">
+        <p>Loading transactions...</p>
+    </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    const BASE_URL = "http://localhost:8080/api/auth"; // NOTE: The PaymentController uses /api/payments not /api/auth
+    const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'PASSENGER') {
+          Swal.fire('Access Denied', 'Please log in as a Passenger.', 'warning').then(() => {
+              window.location.href = 'user-login.html';
+          });
+          return;
+      }
+      document.getElementById('userNameDisplay').textContent = `Showing history for: ${LOGGED_IN_USER.name}`;
+      loadTransactionHistory(LOGGED_IN_USER.id);
+    });
+
+    async function loadTransactionHistory(passengerId) {
+      const container = document.getElementById('historyTableContainer');
+      // CRITICAL: The endpoint is /api/payments, outside the /api/auth path defined in common.js BASE_URL
+      const url = `http://localhost:8080/api/payments/passenger/${passengerId}`;
+
+      try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('Failed to fetch data.');
+
+          const payments = await response.json();
+
+          if (payments.length === 0) {
+              container.innerHTML = '<p>No transactions found.</p>';
+              return;
+          }
+
+          let tableHtml = `
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Date</th>
+                          <th>Amount (₹)</th>
+                          <th>Status</th>
+                          <th>Transaction ID</th>
+                      </tr>
+                  </thead>
+                  <tbody>`;
+
+          payments.forEach(p => {
+              tableHtml += `
+                  <tr>
+                      <td>${new Date(p.paymentDate).toLocaleString()}</td>
+                      <td>₹${p.amount.toFixed(2)}</td>
+                      <td><span style="color: ${p.status === 'SUCCESS' ? 'green' : 'red'}; font-weight: bold;">${p.status}</span></td>
+                      <td>${p.transactionId}</td>
+                  </tr>`;
+          });
+
+          tableHtml += `</tbody></table>`;
+          container.innerHTML = tableHtml;
+
+      } catch (error) {
+          Swal.fire('Error', `Failed to load history: ${error.message}`, 'error');
+          container.innerHTML = '<p>Error loading transaction data.</p>';
+      }
+    }
+</script>
+<style>
+    /* Basic table style for transaction history, borrowing from ride-results or style.css */
+    #historyTableContainer table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    #historyTableContainer th, #historyTableContainer td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    #historyTableContainer th {
+      background-color: #4facfe;
+      color: white;
+    }
+</style>
+</body>
+</html>

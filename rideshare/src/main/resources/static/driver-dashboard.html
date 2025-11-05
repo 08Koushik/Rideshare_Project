@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver Dashboard</title>
+  <style>
+    body {
+      background: url('images/dashboard.png') no-repeat center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!--  <style>-->
+<!--    body {-->
+<!--      background: url('images/dashboard.png') no-repeat center center fixed;-->
+<!--      background-size: cover;-->
+<!--      margin: 0;-->
+<!--      padding: 0;-->
+<!--      font-family: 'Poppins', sans-serif;-->
+<!--    }-->
+<!--  </style>-->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body class="driver-dashboard">
+
+<div class="back-nav">
+  <a href="javascript:history.back()">&larr; Back</a>
+</div>
+
+<button class="logout-btn" id="logoutBtn">Logout</button>
+
+<div class="dashboard-wrapper">
+  <div class="dashboard-left">
+    <h1>Driver Dashboard</h1>
+    <p>Welcome, Driver! Manage your rides and view your details.</p>
+
+    <div id="notification-area" style="margin-top: 30px; padding: 15px; background: #fff0f0; border: 1px solid #ff6b6b; color: #333; border-radius: 8px; display: none;">
+      <strong style="color: #ff6b6b;">Real-Time Notification:</strong><br>
+      <span id="notification-message"></span>
+    </div>
+    <div class="dashboard-buttons">
+      <button class="search-btn" id="postRideBtn">Post a New Ride</button>
+      <button class="view-btn" id="rideRequestsBtn">View Ride Requests</button>
+      <button class="view-btn" onclick="window.location.href='driver-ride-history.html'">View Ride History</button>
+      <button class="view-btn" onclick="window.location.href='user-home.html'">View Profile Details</button>
+    </div>
+  </div>
+
+  <div class="dashboard-right">
+    <div class="circle-img">
+      <img src="images/driver.png" alt="Driver Dashboard Image">
+    </div>
+  </div>
+</div>
+
+<script>
+  // Get logged-in user from storage
+  const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  const BASE_URL = "http://localhost:8080";
+
+  document.getElementById("postRideBtn").addEventListener("click", () => {
+    window.location.href = "post-ride.html";
+  });
+
+  document.getElementById("rideRequestsBtn").addEventListener("click", () => {
+    window.location.href = "driver-ride-requests.html";
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    Swal.fire({
+      title: "Logout Successful",
+      text: "You have been logged out successfully.",
+      icon: "success",
+      confirmButtonColor: "#4facfe",
+      confirmButtonText: "OK"
+    }).then(() => {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "user-login.html";
+    });
+  });
+
+  // =================== WEBSOCKET REAL-TIME LOGIC ===================
+
+  if (loggedInUser && loggedInUser.roleType === 'DRIVER') {
+      let stompClient = null;
+
+      function connect() {
+          console.log("Attempting to connect to WebSocket...");
+          // Connect to the /ws endpoint defined in WebSocketConfig.java
+          const socket = new SockJS(BASE_URL + '/ws');
+          stompClient = Stomp.over(socket);
+
+          stompClient.connect({}, (frame) => {
+              console.log('Connected: ' + frame);
+              const driverId = loggedInUser.id;
+
+              // Subscribe to the driver's personal topic for updates: /topic/driver/{driverId}/updates
+              stompClient.subscribe(`/topic/driver/${driverId}/updates`, (message) => {
+                  const notification = message.body;
+                  showNotification(notification);
+              });
+
+          }, (error) => {
+              console.error("STOMP connection failed, retrying in 5s:", error);
+              setTimeout(connect, 5000); // Attempt to reconnect
+          });
+      }
+
+      function showNotification(message) {
+          const area = document.getElementById('notification-area');
+          const msgEl = document.getElementById('notification-message');
+
+          msgEl.textContent = message;
+          area.style.display = 'block';
+
+          Swal.fire({
+              icon: 'info',
+              title: 'Ride Booked!',
+              text: message,
+              timer: 8000,
+              showConfirmButton: false
+          });
+      }
+
+      connect();
+  }
+</script>
+</body>
+</html>
