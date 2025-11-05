@@ -1,39 +1,95 @@
 package com.rideshare.service;
 
 import org.springframework.stereotype.Service;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 @Service
 public class GeoService {
 
-    private static final double BASE_FARE = 50.0; // Base rate
-    private static final double RATE_PER_KM = 8.5;  // Rate per KM (e.g., ₹8.5)
-
-    // Constants for Haversine Calculation
+    private static final double BASE_FARE = 50.0; // Base rate (₹50.0)
+    private static final double RATE_PER_KM = 8.5;  // Rate per KM (₹8.5)
     private static final double EARTH_RADIUS_KM = 6371;
+
     private static final String LOCATIONIQ_API_KEY = "pk.8c6dc49f1003f5c138f99ed064ad5a43";
 
-
-    private double getPseudoCoordinate(String location, boolean isLatitude) {
-        // Use a deterministic hash to create unique coordinates for simulation
-        int hash = location.hashCode();
-        double base = isLatitude ? 17.0 : 78.0;
-        double offset = (hash % 1000) / 1000.0;
-        return base + offset;
+    // Internal class to hold coordinates
+    private static class Coordinates {
+        double latitude;
+        double longitude;
+        Coordinates(double lat, double lon) {
+            this.latitude = lat;
+            this.longitude = lon;
+        }
     }
 
     /**
-     * Calculates the distance in Km using the Haversine formula based on simulated coordinates.
+     * Makes an external API call to LocationIQ to geocode a location string into coordinates.
+     */
+    private Coordinates fetchCoordinates(String location) {
+        String encodedLocation = java.net.URLEncoder.encode(location, java.nio.charset.StandardCharsets.UTF_8);
+        String urlString = String.format(
+                "https://us1.locationiq.com/v1/search?key=%s&q=%s&format=json&limit=1",
+                LOCATIONIQ_API_KEY, encodedLocation);
+
+        try {
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            if (conn.getResponseCode() != 200) {
+                System.err.println("LocationIQ Geocoding failed with response code: " + conn.getResponseCode());
+                return null;
+            }
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder jsonResponse = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                jsonResponse.append(line);
+            }
+            br.close();
+            conn.disconnect();
+
+            // Parse the JSON response
+            JSONArray results = new JSONArray(jsonResponse.toString());
+            if (results.length() > 0) {
+                JSONObject firstResult = results.getJSONObject(0);
+                double lat = firstResult.getDouble("lat");
+                double lon = firstResult.getDouble("lon");
+                return new Coordinates(lat, lon);
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching coordinates for " + location + ": " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Calculates the distance in Km using the Haversine formula based on coordinates fetched from LocationIQ.
      */
     public double getDistanceInKm(String origin, String destination) {
-        System.out.println("Using LocationIQ key context (API Call Simulated): " + LOCATIONIQ_API_KEY);
+        // 1. Get Coordinates for Source
+        Coordinates coord1 = fetchCoordinates(origin);
+        // 2. Get Coordinates for Destination
+        Coordinates coord2 = fetchCoordinates(destination);
 
-        // 1. SIMULATE GEOCODING
-        double lat1 = getPseudoCoordinate(origin, true);
-        double lon1 = getPseudoCoordinate(origin, false);
-        double lat2 = getPseudoCoordinate(destination, true);
-        double lon2 = getPseudoCoordinate(destination, false);
+        if (coord1 == null || coord2 == null) {
+            // If API fails, use a fallback distance (e.g., 500 km) to prevent extremely cheap fares.
+            System.err.println("Could not geocode one or both locations. Returning default distance of 500.0 km.");
+            return 500.0;
+        }
 
-        // 2. HAVERSINE DISTANCE CALCULATION
+        // 3. HAVERSINE DISTANCE CALCULATION (Real Haversine using geocoded coordinates)
+        double lat1 = coord1.latitude;
+        double lon1 = coord1.longitude;
+        double lat2 = coord2.latitude;
+        double lon2 = coord2.longitude;
+
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
 
@@ -44,11 +100,14 @@ public class GeoService {
 
         double distance = EARTH_RADIUS_KM * c;
 
-        // Enforce a practical minimum/maximum for the simulation
-        distance = Math.min(100.0, Math.max(10.0, distance));
+        // Ensure a minimum distance (e.g., 5 km for a local trip)
+        distance = Math.max(5.0, distance);
 
-        System.out.println(String.format("Simulated Haversine Distance: %.2f km", distance));
+        System.out.println(String.format("Calculated Haversine Distance: %.2f km", distance));
 
+        // Note: Haversine distance is "as the crow flies," which is the straight line distance.
+        // For road distance, you would ideally use the LocationIQ Routing API, but this Haversine implementation
+        // using real coordinates is a significant step toward accuracy for the fare calculation.
         return distance;
     }
 
