@@ -3,6 +3,7 @@ package com.rideshare.dto;
 import com.rideshare.entity.Ride;
 import com.rideshare.entity.User;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class RideDetailsResponse {
     private Long rideId;
@@ -21,10 +22,10 @@ public class RideDetailsResponse {
     private String vehicleName; // From Ride Entity
     private String vehicleType; // From Ride Entity
     private String vehicleNumber; // From User Entity (vehicleDetails)
-    private String vehicleImageReference; // From Ride Entity
+    private List<String> vehicleImageReferences; // From Ride Entity
 
     // Constructor to map data from Ride and User entities
-    public RideDetailsResponse(Ride ride, User driver) {
+    public RideDetailsResponse(Ride ride, User driver,List<String> imageRefs) {
         this.rideId = ride.getId();
         this.source = ride.getSource();
         this.destination = ride.getDestination();
@@ -41,7 +42,7 @@ public class RideDetailsResponse {
         // Map Vehicle Details (from Ride entity fields added previously)
         this.vehicleName = ride.getVehicleName();
         this.vehicleType = ride.getVehicleType();
-        this.vehicleImageReference = ride.getVehicleImageReference();
+        this.vehicleImageReferences = imageRefs;
     }
 
     // --- Getters and Setters ---
@@ -82,6 +83,8 @@ public class RideDetailsResponse {
     public String getVehicleNumber() { return vehicleNumber; }
     public void setVehicleNumber(String vehicleNumber) { this.vehicleNumber = vehicleNumber; }
 
-    public String getVehicleImageReference() { return vehicleImageReference; }
-    public void setVehicleImageReference(String vehicleImageReference) { this.vehicleImageReference = vehicleImageReference; }
+    public List<String> getVehicleImageReferences() { return vehicleImageReferences; }
+    public void setVehicleImageReferences(List<String> vehicleImageReferences) { this.vehicleImageReferences = vehicleImageReferences; }
+
+
 }

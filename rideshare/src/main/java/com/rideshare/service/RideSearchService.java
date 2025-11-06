@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -57,8 +58,13 @@ public class RideSearchService {
                 // Skip or handle corrupted data
                 return null;
             }
+            List<String> imageReferences = new ArrayList<>();
+            String refString = ride.getVehicleImageReference();
+            if (refString != null && !refString.isEmpty()) {
+                imageReferences = Arrays.asList(refString.split(";"));
+            }
 
-            return new RideDetailsResponse(ride, driver);
+            return new RideDetailsResponse(ride, driver,imageReferences);
         }).filter(r -> r != null).collect(Collectors.toList());
     }
 }

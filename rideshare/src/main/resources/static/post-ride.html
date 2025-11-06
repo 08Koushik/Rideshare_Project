@@ -102,7 +102,7 @@
             </select>
 
             <label for="vehicleImage">Vehicle Image</label>
-            <input type="file" id="vehicleImage" accept="image/*">
+            <input type="file" id="vehicleImage" accept="image/*" multiple>
 
             <div class="navigation-buttons">
                 <button type="button" onclick="prevStep()">Back (Step 2)</button>
@@ -258,9 +258,11 @@
             type: 'application/json'
         }));
 
-        // Append the file part named 'vehicleImage'
-        if (fileInput.files.length > 0) {
-            formData.append('vehicleImage', fileInput.files[0]);
+       if (fileInput.files.length > 0) {
+            for (let i = 0; i < fileInput.files.length; i++) {
+                // Key matches the controller's @RequestPart name
+                formData.append('vehicleImages', fileInput.files[i]);
+            }
         }
 
         // --- 3. SEND REQUEST WITH FormData (CRITICAL FIX) ---

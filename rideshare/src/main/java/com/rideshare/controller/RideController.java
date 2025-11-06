@@ -24,7 +24,7 @@ public class RideController {
     @Autowired
     private RideRepository rideRepository;
 
-    @Autowired // NEW INJECTION
+    @Autowired
     private GeoService geoService;
 
     @Autowired
@@ -36,13 +36,20 @@ public class RideController {
     @PostMapping(value = "/post", consumes = {"multipart/form-data"})
     public Ride postRide(
             @RequestPart("rideData") Ride ride, // Changed from @RequestBody
-            @RequestPart(value = "vehicleImage", required = false) MultipartFile vehicleImage) throws IOException { // NEW FILE PART
+            @RequestPart(value = "vehicleImages", required = false) List<MultipartFile> vehicleImages) throws IOException {
 
-        // 1. Handle Image Upload and set the reference URL
-        if (vehicleImage != null && !vehicleImage.isEmpty()) {
-            String imagePath = fileStorageService.storeFile(vehicleImage); // Saves file and returns web path
-            ride.setVehicleImageReference(imagePath); // Set the accessible URL/path
+
+        List<String> imagePaths = new ArrayList<>();
+
+        if (vehicleImages != null && !vehicleImages.isEmpty()) {
+            for (MultipartFile vehicleImage : vehicleImages) {
+                if (vehicleImage != null && !vehicleImage.isEmpty()) {
+                    String imagePath = fileStorageService.storeFile(vehicleImage); // Saves file and returns web path
+                    imagePaths.add(imagePath);
+                }
+            }
         }
+        ride.setVehicleImageReference(String.join(";", imagePaths));
 
         double distance = geoService.getDistanceInKm(ride.getSource(), ride.getDestination());
         double totalFare = geoService.calculateFare(distance);
