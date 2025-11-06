@@ -10,12 +10,12 @@
   <script src="https://js.stripe.com/v3/"></script>
 
   <style>
-    /* ... (Your existing CSS styles remain here, copied from the uploaded file) ... */
-
     /* ===== Global Page Style ===== */
     body {
       font-family: 'Poppins', Arial, sans-serif;
-      background-color: #f8f9fa;
+      /* This ensures the blue background is visible */
+      background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
+      background-size: cover;
       margin: 0;
       padding: 0;
       color: #333;
@@ -29,7 +29,8 @@
     }
 
     .back-nav a {
-      background-color: #3399ff;
+      /* Standardize back button color to primary blue */
+      background-color: #4facfe;
       color: white;
       padding: 10px 20px;
       border-radius: 25px;
@@ -40,31 +41,35 @@
     }
 
     .back-nav a:hover {
-      background-color: #0073e6;
+      background-color: #00f2fe;
+      color: #333;
     }
 
-    /* ===== Main Container ===== */
+    /* ===== Main Container (form-container) ===== */
     .form-container {
       width: 90%;
-      max-width: 1000px; /* Increased max-width for extra columns */
-      background: #fff;
+      max-width: 1000px;
       margin: 80px auto;
       border-radius: 10px;
       padding: 25px 35px;
+      /* FIX 1: Make container transparent with blur */
+      background-color: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(5px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     /* ===== Headings ===== */
     h2 {
       text-align: center;
-      color: #007bff;
+      /* Standardize heading color */
+      color: #4facfe;
       margin-bottom: 10px;
       font-size: 26px;
     }
 
     h3 {
       color: #333;
-      margin-top: 2:0px;
+      margin-top: 20px; /* Corrected spacing */
       text-align: left;
     }
 
@@ -87,21 +92,26 @@
       border: 1px solid #dee2e6;
       padding: 10px 12px;
       text-align: center;
+      /* FIX 2: Make table cells semi-transparent */
+      background-color: rgba(255, 255, 255, 0.5);
     }
 
     th {
-      background-color: #007bff;
+      /* Standardize table header color */
+      background-color: #4facfe;
       color: #fff;
       font-weight: normal;
     }
 
     tr:nth-child(even) {
-      background-color: #f2f2f2;
+      /* Light shade for alternate rows, keeping transparency */
+      background-color: rgba(0, 0, 0, 0.05);
     }
 
-    /* ===== Buttons ===== */
+    /* ===== Buttons (General Style) ===== */
     button {
-      background-color: #007bff;
+      /* FIX 3: Use consistent primary blue color */
+      background-color: #4facfe;
       color: white;
       border: none;
       border-radius: 6px;
@@ -112,12 +122,25 @@
     }
 
     button:hover {
-      background-color: #0056b3;
+      /* FIX 3: Use consistent secondary/hover blue color */
+      background-color: #00f2fe;
+      color: #333; /* Darker text for light hover background */
     }
 
     .small-button {
       padding: 6px 10px;
       font-size: 13px;
+    }
+
+    /* ===== FIX 4: Action Column Layout (for overlapping buttons) ===== */
+    #resultsContainer td:last-child {
+        /* Use flexbox to organize the buttons neatly in the center */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        gap: 5px; /* Spacing between the buttons */
     }
 
     /* ===== New Search Button ===== */

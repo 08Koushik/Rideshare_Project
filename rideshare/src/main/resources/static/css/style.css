@@ -501,12 +501,14 @@ body.passenger-dashboard {
    ====================================================== */
 
 .home-container {
-    max-width: 650px;
-    margin: 100px auto;
-    background-color: #ffffff;
-    padding: 40px 50px;
-    border-radius: 20px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    /* CHANGED: Use semi-transparent background for readability */
+    background-color: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px); /* Add blur effect */
+    border-radius: 12px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.15); /* Adjust shadow for visibility */
     text-align: center;
 }
 
@@ -599,7 +601,6 @@ body.passenger-dashboard {
 }
 /* === DRIVER DASHBOARD STYLE === */
 body.driver-dashboard {
-    background: white;
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;

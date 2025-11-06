@@ -3,6 +3,7 @@ package com.rideshare.service;
 import com.rideshare.entity.RoleType;
 import com.rideshare.entity.User;
 import com.rideshare.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // NEW IMPORT
@@ -22,6 +23,7 @@ public class UserService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder; // NEW INJECTION: USED FOR LOGIN/RESET
+
 
     // Default Admin credentials
     private final String ADMIN_EMAIL = "admin@rideshare.com";
