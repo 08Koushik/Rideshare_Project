@@ -86,4 +86,9 @@ public class RideController {
         // NOTE: findByDriverId method must be added to RideRepository
         return rideRepository.findByDriverId(driverId);
     }
+    @GetMapping("/admin/rides")
+    public List<Ride> getAllRides() {
+        return rideRepository.findAll();
+    }
+
 }

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
-<body style="margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; background: linear-gradient(135deg, #e0f7fa, #c5cae9);">
+<body style="margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; background: url('images/blue_abstract_bg.png') no-repeat center center fixed; background-size: cover;">
 
 <div class="back-nav" style="display: none;"></div>
 
@@ -34,19 +34,20 @@
   </div>
 </div>
 
-<div class="dashboard-container" style="flex-grow: 1; margin: 0; width: auto; height: 100vh; padding: 30px; border-radius: 0; box-shadow: none; background-color: #ffffff; overflow-y: auto;">
+<div class="dashboard-container" style="flex-grow: 1; margin: 0; width: auto; padding: 30px; border-radius: 0; box-shadow: none; background-color: #ffffff; overflow-y: auto;">
 
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
     <h2 style="font-size: 1.8rem; margin: 0; border-bottom: none; color: #4facfe;">Dashboard</h2>
     <div style="display: flex; gap: 10px;">
 
+      <button id="monitorDataBtn" style="background-color: #3f51b5; color: white; padding: 10px 20px; font-weight: bold;">
+        <i class="fas fa-eye"></i> Monitor All Data
+      </button>
+
       <button onclick="loadUsers()" style="background-color: #f0f0f0; color: #4facfe; border: 1px solid #ccc; box-shadow: none; padding: 10px 20px; font-weight: bold;">
         <i class="fas fa-sync-alt"></i> Refresh
       </button>
 
-<!--      <button id="onboardBtn" style="padding: 10px 20px; font-weight: bold;">-->
-<!--        <i class="fa-solid fa-user-plus"></i> Create user-->
-<!--      </button>-->
       <button id="onboardBtn" onclick="window.location.href='admin-onboard-user.html'" style="padding: 10px 20px; font-weight: bold;">
         <i class="fa-solid fa-user-plus"></i> Create user
       </button>
@@ -80,7 +81,7 @@
     <span style="font-weight: bold; color: #333; margin-left: auto;">Total users: <span id="totalUsersCountDisplay">0</span></span>
   </div>
 
-  <div id="user-stats" style="display: flex; gap: 20px; text-align: center; margin-bottom: 50px;">
+  <div id="user-stats" style="display: flex; flex-wrap: wrap; gap: 20px; text-align: center; margin-bottom: 50px;">
 
     <div style="background: linear-gradient(135deg, #a77dff, #6f54ff); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
       <h4 style="margin: 0; font-size: 1rem;">US</h4>
@@ -99,22 +100,66 @@
       <p id="passengerCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
       <p style="font-size: 0.8rem; margin: 0;">Passengers</p>
     </div>
+
+    <div style="background: linear-gradient(135deg, #ff9b6b, #f76b1c); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+      <h4 style="margin: 0; font-size: 1rem;">Rides</h4>
+      <p id="totalRidesCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+      <p style="font-size: 0.8rem; margin: 0;">Total Posted</p>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+      <h4 style="margin: 0; font-size: 1rem;">Earnings</h4>
+      <p id="totalEarnings" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+      <p style="font-size: 0.8rem; margin: 0;">Total Paid</p>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #a77dff, #6f54ff); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+      <h4 style="margin: 0; font-size: 1rem;">BKS</h4>
+      <p id="totalBookingsCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+      <p style="font-size: 0.8rem; margin: 0;">Total Bookings</p>
+    </div>
+
   </div>
 
-  <h3 style="color: #4facfe;">User Distribution Chart</h3>
-  <div style="width: 400px; height: 400px; margin: 20px auto; background-color: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
-    <canvas id="userRoleChart"></canvas>
+  <h3 style="color: #4facfe; margin-bottom: 20px;">Dashboard Analytics</h3>
+
+  <div class="chart-wrapper" style="display: flex; gap: 30px; margin-bottom: 50px;">
+    <div style="flex: 1; min-width: 45%; max-width: 50%; background-color: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
+      <h3 style="text-align: center; color: #4facfe; margin-top: 5px;">Primary Metrics Distribution</h3>
+      <div style="height: 300px; width: 100%; margin: 10px auto;">
+        <canvas id="userRoleChart"></canvas>
+      </div>
+    </div>
+
+    <div id="overview-report-card" style="flex: 1; min-width: 45%; max-width: 50%; background-color: #fff; padding: 25px; border: 1px solid #ccc; border-radius: 8px;">
+      <h3 style="color: #4facfe; margin-top: 0; margin-bottom: 20px;">Overview - Interactive Snapshot</h3>
+
+      <div style="display: flex; gap: 40px;">
+        <div style="flex: 1;">
+          <p style="font-size: 1.1rem; font-weight: 500; color: #555; margin-bottom: 5px; text-align: left;">Total Earnings</p>
+          <div style="font-size: 3rem; font-weight: bold; color: #43e97b; margin-bottom: 10px;" id="overview-earnings-value">₹0.00</div>
+          <span style="color: #43e97b; font-weight: bold;">+0.00%</span>
+        </div>
+
+        <div style="flex: 1; border-left: 1px solid #eee; padding-left: 20px;">
+          <p style="font-weight: bold; margin-bottom: 10px; color: #333;">To Do List</p>
+          <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.9em; color: #777;">
+            <li style="margin-bottom: 5px;">Review pending driver documents</li>
+            <li style="margin-bottom: 5px;">Export bookings report</li>
+            <li style="margin-bottom: 5px;">Audit suspicious accounts</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 
-</div>
 
-
-<script>
-  // Define BASE_URL here to guarantee it's available before admin-dashboard.js loads
-  const BASE_URL = "http://localhost:8080/api/auth";
-</script>
-<script src="js/common.js"></script>
-<script src="js/admin-dashboard.js"></script>
+  <script>
+    // Define BASE_URL here to guarantee it's available before admin-dashboard.js loads
+    const BASE_URL = "http://localhost:8080/api/auth";
+  </script>
+  <script src="js/common.js"></script>
+  <script src="js/admin-dashboard.js"></script>
 
 </body>
 </html>

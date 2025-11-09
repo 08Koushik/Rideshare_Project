@@ -110,4 +110,8 @@ public class BookingController {
 
         return new ClientSecretResponse(clientSecret);
     }
+    @GetMapping("/admin/bookings")
+    public List<Booking> getAllBookings() {
+        return bookingRepository.findAll();
+    }
 }

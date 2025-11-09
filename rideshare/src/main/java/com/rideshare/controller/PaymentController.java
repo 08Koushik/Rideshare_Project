@@ -18,4 +18,8 @@ public class PaymentController {
     public List<Payment> getPassengerHistory(@PathVariable Long passengerId) {
         return paymentRepository.findByPassengerId(passengerId);
     }
+    @GetMapping("/admin/payments")
+    public List<Payment> getAllPayments() {
+        return paymentRepository.findAll();
+    }
 }

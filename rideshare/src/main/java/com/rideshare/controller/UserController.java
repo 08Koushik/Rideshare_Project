@@ -6,6 +6,8 @@ import com.rideshare.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.rideshare.dto.AdminReportDTO;
+import com.rideshare.service.AdminReportingService;
 
 import java.util.List;
 
@@ -15,6 +17,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AdminReportingService adminReportingService;
 
     // Admin login
     @PostMapping("/admin/login")
@@ -91,5 +96,9 @@ public class UserController {
     public ResponseEntity<String> deleteAllUsers() {
         userService.deleteAllUsers();
         return ResponseEntity.ok("All users deleted successfully!");
+    }
+    @GetMapping("/admin/report")
+    public AdminReportDTO getReport() {
+        return adminReportingService.getSystemReport();
     }
 }
