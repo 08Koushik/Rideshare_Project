@@ -2,10 +2,13 @@ package com.rideshare.controller;
 
 import com.rideshare.entity.Booking;
 import com.rideshare.entity.Ride;
+import com.rideshare.entity.User; // NEW IMPORT
 import com.rideshare.repository.BookingRepository;
 import com.rideshare.repository.RideRepository;
+import com.rideshare.repository.UserRepository; // NEW IMPORT
 import com.rideshare.service.PaymentService;
 import com.rideshare.service.BookingService;
+import com.rideshare.service.EmailService; // NEW IMPORT
 import com.rideshare.dto.DriverRideRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +27,9 @@ public class BookingController {
     private RideRepository rideRepository;
 
     @Autowired
+    private UserRepository userRepository; // NEW INJECTION
+
+    @Autowired
     private PaymentService paymentService;
 
     @Autowired
@@ -31,6 +37,9 @@ public class BookingController {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private EmailService emailService; // NEW INJECTION
 
     @PostMapping("/book")
     public String bookRide(@RequestBody Booking bookingRequest, @RequestParam String paymentMethodId) {
@@ -41,6 +50,14 @@ public class BookingController {
         // 1️⃣ Find the ride by ID
         Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new RuntimeException("Ride not found"));
+
+        // 1.5 Fetch Passenger and Driver details early for email
+        User passenger = userRepository.findById(bookingRequest.getPassengerId())
+                .orElseThrow(() -> new RuntimeException("Passenger not found."));
+
+        User driver = userRepository.findById(ride.getDriverId())
+                .orElseThrow(() -> new RuntimeException("Driver not found for ride."));
+
 
         // 2️⃣ Check if enough seats are available
         if (ride.getAvailableSeats() < seatsRequested) {
@@ -73,6 +90,19 @@ public class BookingController {
                 rideId, seatsRequested, ride.getAvailableSeats());
 
         messagingTemplate.convertAndSend(driverTopic, message);
+
+        // 🆕 NEW LOGIC: Send booking confirmation email to passenger
+        emailService.sendBookingConfirmation(
+                passenger.getEmail(),
+                passenger.getName(),
+                driver.getName(),
+                ride.getSource(),
+                ride.getDestination(),
+                ride.getDateTime().toString(), // Use toString for simplicity
+                seatsRequested,
+                totalAmount
+        );
+        // --------------------------------------------------------
 
         // 8️⃣ Simulate Driver Payout (post-completion requirement)
         paymentService.processDriverPayout(ride.getDriverId(), totalAmount);

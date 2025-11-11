@@ -1,9 +1,12 @@
 package com.rideshare.controller;
 
 import com.rideshare.entity.Ride;
+import com.rideshare.entity.User; // NEW IMPORT
 import com.rideshare.repository.RideRepository;
+import com.rideshare.repository.UserRepository; // NEW IMPORT
 import com.rideshare.service.FileStorageService;
 import com.rideshare.service.GeoService;
+import com.rideshare.service.EmailService; // NEW IMPORT
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile; // NEW IMPORT
@@ -25,6 +28,9 @@ public class RideController {
     private RideRepository rideRepository;
 
     @Autowired
+    private UserRepository userRepository; // NEW INJECTION
+
+    @Autowired
     private GeoService geoService;
 
     @Autowired
@@ -32,6 +38,9 @@ public class RideController {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private EmailService emailService; // NEW INJECTION
 
     @PostMapping(value = "/post", consumes = {"multipart/form-data"})
     public Ride postRide(
@@ -53,8 +62,26 @@ public class RideController {
 
         double distance = geoService.getDistanceInKm(ride.getSource(), ride.getDestination());
         double totalFare = geoService.calculateFare(distance);
-        ride.setFarePerSeat(totalFare / ride.getAvailableSeats());
-        return rideRepository.save(ride);
+        double farePerSeat = totalFare / ride.getAvailableSeats();
+        ride.setFarePerSeat(farePerSeat);
+
+        Ride savedRide = rideRepository.save(ride);
+
+        // 🆕 NEW LOGIC: Send ride posted confirmation email to driver
+        User driver = userRepository.findById(ride.getDriverId())
+                .orElseThrow(() -> new RuntimeException("Driver not found after posting ride."));
+
+        emailService.sendRidePostConfirmation(
+                driver.getEmail(),
+                driver.getName(),
+                savedRide.getSource(),
+                savedRide.getDestination(),
+                savedRide.getDateTime().toString(), // Use toString for simplicity
+                farePerSeat
+        );
+        // ----------------------------------------------------
+
+        return savedRide;
     }
 
     // ✅ Search rides - UPDATED TO INCLUDE PARTIAL MATCHES (Route Matching)
@@ -90,5 +117,4 @@ public class RideController {
     public List<Ride> getAllRides() {
         return rideRepository.findAll();
     }
-
 }
