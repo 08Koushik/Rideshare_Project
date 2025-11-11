@@ -16,7 +16,7 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private RoleType roleType;  // <-- New field
+    private RoleType roleType;
 
     private boolean isFirstLogin;
     private String vehicleDetails;

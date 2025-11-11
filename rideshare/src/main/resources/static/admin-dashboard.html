@@ -9,23 +9,104 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    /*
+     * FIXED: Restored transparent black sidebar with blur and set appropriate font colors.
+     */
+
+    /* Apply the consistent blue abstract background to the body */
+    body {
+      background: url('images/blue_abstract_bg.png') no-repeat center center fixed !important;
+      background-size: cover !important;
+    }
+
+    /* 1. Make the main content wrapper transparent and blurred */
+    .dashboard-container {
+      flex-grow: 1;
+      margin: 0;
+      width: auto;
+      padding: 30px;
+      border-radius: 0;
+      box-shadow: none;
+      overflow-y: auto;
+      /* Apply Transparency and Blur */
+      background-color: rgba(255, 255, 255, 0.3) !important;
+      backdrop-filter: blur(5px) !important;
+      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* 2. Make the Sidebar transparent black/dark, blurred, and set text color to white */
+    #sidebar {
+      /* Black Transparent with blur */
+      background-color: rgba(0, 0, 0, 0.4) !important;
+      backdrop-filter: blur(5px) !important;
+      color: #fff !important; /* Set text to white/light */
+      box-shadow: 2px 0 10px rgba(0,0,0,0.3) !important;
+    }
+
+    /* Adjust Sidebar contents' colors for contrast */
+    #sidebar h3 {
+        color: #4facfe !important; /* Title remains bright blue */
+    }
+    #sidebar #navDashboard {
+        color: #4facfe !important; /* Active link remains bright blue */
+    }
+    /* Inactive links and footer text must be white for contrast with dark sidebar */
+    #navUsers, #navSettings {
+        color: #fff !important;
+    }
+    #sidebar > div:last-child {
+        color: #fff !important;
+    }
+
+    /* 3. Make the Filter Row transparent and blurred */
+    #filter-sort-row {
+      /* Apply Transparency and Blur */
+      background-color: rgba(255, 255, 255, 0.2) !important;
+      backdrop-filter: blur(3px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* 4. Make Inner Chart/Report Cards transparent and blurred */
+    .chart-wrapper > div {
+      /* Apply Transparency and Blur */
+      background-color: rgba(255, 255, 255, 0.5) !important;
+      backdrop-filter: blur(3px) !important;
+      border: 1px solid #eee !important;
+    }
+
+    /* Adjust visibility for elements inside transparent containers */
+    #filter-sort-row input, #filter-sort-row select {
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+    #filter-sort-row span {
+        color: #fff !important; /* Total users count in filter row needs to be white now */
+    }
+    #user-stats > div {
+      /* Keep the stat cards slightly opaque to preserve the gradient visual */
+      opacity: 0.9;
+    }
+    .chart-wrapper #overview-report-card .info-item strong {
+        color: #4facfe; /* Ensure color scheme coherence */
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; background: url('images/blue_abstract_bg.png') no-repeat center center fixed; background-size: cover;">
+<body style="margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden;">
 
 <div class="back-nav" style="display: none;"></div>
 
-<div id="sidebar" style="width: 250px; background-color: #27293d; padding: 20px 0; color: #fff; display: flex; flex-direction: column; height: 100%; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">
+<div id="sidebar" style="width: 250px; padding: 20px 0; display: flex; flex-direction: column; height: 100%;">
   <h3 style="margin: 0 20px 30px; font-weight: bold; color: #4facfe;">RideShare Admin</h3>
 
   <div id="navDashboard" style="padding: 10px 20px; font-size: 1.1rem; color: #4facfe; cursor: pointer;">
     <i class="fas fa-chart-line" style="margin-right: 10px;"></i> Dashboard
   </div>
 
-  <div id="navUsers" style="padding: 10px 20px; font-size: 1.1rem; opacity: 0.7; cursor: pointer;">
+  <div id="navUsers" style="padding: 10px 20px; font-size: 1.1rem; opacity: 0.9; cursor: pointer;">
     <i class="fas fa-users" style="margin-right: 10px;"></i> Users
   </div>
 
-  <div id="navSettings" style="padding: 10px 20px; font-size: 1.1rem; opacity: 0.7; cursor: pointer;">
+  <div id="navSettings" style="padding: 10px 20px; font-size: 1.1rem; opacity: 0.9; cursor: pointer;">
     <i class="fas fa-cog" style="margin-right: 10px;"></i> Settings
   </div>
 
@@ -34,7 +115,7 @@
   </div>
 </div>
 
-<div class="dashboard-container" style="flex-grow: 1; margin: 0; width: auto; padding: 30px; border-radius: 0; box-shadow: none; background-color: #ffffff; overflow-y: auto;">
+<div class="dashboard-container">
 
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
     <h2 style="font-size: 1.8rem; margin: 0; border-bottom: none; color: #4facfe;">Dashboard</h2>
@@ -62,7 +143,7 @@
     </div>
   </div>
 
-  <div id="filter-sort-row" style="display: flex; gap: 15px; align-items: center; margin-bottom: 30px; padding: 10px; background-color: #f7f9fc; border-radius: 8px;">
+  <div id="filter-sort-row" style="display: flex; gap: 15px; align-items: center; margin-bottom: 30px; padding: 10px; border-radius: 8px;">
 
     <input type="text" id="searchUserInput" placeholder="Search by name or email..." style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 300px;">
 
@@ -78,7 +159,7 @@
       <option value="name">Sort: Name</option>
     </select>
 
-    <span style="font-weight: bold; color: #333; margin-left: auto;">Total users: <span id="totalUsersCountDisplay">0</span></span>
+    <span style="font-weight: bold; margin-left: auto;">Total users: <span id="totalUsersCountDisplay">0</span></span>
   </div>
 
   <div id="user-stats" style="display: flex; flex-wrap: wrap; gap: 20px; text-align: center; margin-bottom: 50px;">
@@ -124,14 +205,14 @@
   <h3 style="color: #4facfe; margin-bottom: 20px;">Dashboard Analytics</h3>
 
   <div class="chart-wrapper" style="display: flex; gap: 30px; margin-bottom: 50px;">
-    <div style="flex: 1; min-width: 45%; max-width: 50%; background-color: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
+    <div style="flex: 1; min-width: 45%; max-width: 50%; padding: 10px; border-radius: 8px;">
       <h3 style="text-align: center; color: #4facfe; margin-top: 5px;">Primary Metrics Distribution</h3>
       <div style="height: 300px; width: 100%; margin: 10px auto;">
         <canvas id="userRoleChart"></canvas>
       </div>
     </div>
 
-    <div id="overview-report-card" style="flex: 1; min-width: 45%; max-width: 50%; background-color: #fff; padding: 25px; border: 1px solid #ccc; border-radius: 8px;">
+    <div id="overview-report-card" style="flex: 1; min-width: 45%; max-width: 50%; padding: 25px; border-radius: 8px;">
       <h3 style="color: #4facfe; margin-top: 0; margin-bottom: 20px;">Overview - Interactive Snapshot</h3>
 
       <div style="display: flex; gap: 40px;">
