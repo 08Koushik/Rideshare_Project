@@ -2,6 +2,7 @@ package com.rideshare.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Objects; // <-- NEW IMPORT
 
 @Entity
 @Table(name = "rides")
@@ -25,6 +26,22 @@ public class Ride {
     private String vehicleName;
     private String vehicleType;
     private String vehicleImageReference;
+
+    // ADDED: equals() and hashCode() based on ID
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ride ride = (Ride) o;
+        // Only compare by the unique database ID
+        return Objects.equals(id, ride.id);
+    }
+
+    @Override
+    public int hashCode() {
+        // Only hash by the unique database ID
+        return Objects.hash(id);
+    }
 
     // Getters and Setters
     public Long getId() { return id; }

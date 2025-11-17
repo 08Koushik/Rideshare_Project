@@ -33,25 +33,23 @@ public class UserController {
     // Onboard user
     @PostMapping("/admin/onboard")
     public User onboardUser(
-            @RequestBody OnboardUserRequest request // <-- Uses the single DTO object
+            @RequestBody OnboardUserRequest request
     ) {
-        // Passes DTO fields to the service layer method
+
         return userService.onboardUser(
                 request.getName(),
                 request.getEmail(),
                 request.getContact(),
                 request.getRole(),
-                request.getVehicle(), // Vehicle Number (vehicleDetails in Entity)
+                request.getVehicle(),
                 request.getDriverLicenseNumber(),
                 request.getAadharNumber()
         );
     }
     @PostMapping("/register")
     public User registerUser(@RequestBody OnboardUserRequest request) {
-        // For self-registration, force the role away from 'ADMIN'.
         String role = request.getRole();
         if (role == null || role.equalsIgnoreCase("ADMIN")) {
-            // Default to Passenger if no role/Admin role is attempted
             role = "PASSENGER";
         }
 

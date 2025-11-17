@@ -11,16 +11,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
     /*
-     * FIXED: Restored transparent black sidebar with blur and set appropriate font colors.
+     * NEW: Sidebar is now SOLID BLACK (#000000) with white text.
+     * Transparency and blur have been removed from the sidebar.
      */
 
     /* Apply the consistent blue abstract background to the body */
-    body {
-      background: url('images/blue_abstract_bg.png') no-repeat center center fixed !important;
-      background-size: cover !important;
-    }
+    /* You previously requested a light grey body. I am keeping the original blue background here based on your provided file, but removing the body style from the inline block to let the linked CSS handle it. */
+    /* Since you provided the original file with the comments for body style removed, I will maintain the structure but ensure the sidebar is solid black. */
 
-    /* 1. Make the main content wrapper transparent and blurred */
+    /* 1. Make the main content wrapper solid white (from your previous request's goal) */
     .dashboard-container {
       flex-grow: 1;
       margin: 0;
@@ -29,19 +28,19 @@
       border-radius: 0;
       box-shadow: none;
       overflow-y: auto;
-      /* Apply Transparency and Blur */
-      background-color: rgba(255, 255, 255, 0.3) !important;
-      backdrop-filter: blur(5px) !important;
+      /* NEW: Solid white background for the main container, removing transparency/blur */
+      background-color: #ffffff !important;
+      backdrop-filter: none !important;
       box-shadow: 0 5px 30px rgba(0, 0, 0, 0.15) !important;
     }
 
-    /* 2. Make the Sidebar transparent black/dark, blurred, and set text color to white */
+    /* 2. Make the Sidebar SOLID BLACK and remove all transparency/blur filters */
     #sidebar {
-      /* Black Transparent with blur */
-      background-color: rgba(0, 0, 0, 0.4) !important;
-      backdrop-filter: blur(5px) !important;
+      /* NEW: Solid Black, No Transparency, No Blur */
+      background-color: #000000 !important;
+      backdrop-filter: none !important;
       color: #fff !important; /* Set text to white/light */
-      box-shadow: 2px 0 10px rgba(0,0,0,0.3) !important;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.5) !important; /* Stronger shadow for black sidebar */
     }
 
     /* Adjust Sidebar contents' colors for contrast */
@@ -50,41 +49,42 @@
     }
     #sidebar #navDashboard {
         color: #4facfe !important; /* Active link remains bright blue */
+        background-color: rgba(79, 172, 254, 0.1); /* Subtle highlight for active link */
     }
     /* Inactive links and footer text must be white for contrast with dark sidebar */
     #navUsers, #navSettings {
         color: #fff !important;
     }
     #sidebar > div:last-child {
-        color: #fff !important;
+        color: #ddd !important;
     }
 
-    /* 3. Make the Filter Row transparent and blurred */
+    /* 3. Make the Filter Row solid white/light */
     #filter-sort-row {
-      /* Apply Transparency and Blur */
-      background-color: rgba(255, 255, 255, 0.2) !important;
-      backdrop-filter: blur(3px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      /* NEW: Solid white background, removing transparency/blur */
+      background-color: #ffffff !important;
+      backdrop-filter: none !important;
+      border: 1px solid #e0e0e0 !important;
     }
 
-    /* 4. Make Inner Chart/Report Cards transparent and blurred */
+    /* 4. Make Inner Chart/Report Cards solid white/light */
     .chart-wrapper > div {
-      /* Apply Transparency and Blur */
-      background-color: rgba(255, 255, 255, 0.5) !important;
-      backdrop-filter: blur(3px) !important;
-      border: 1px solid #eee !important;
+      /* NEW: Solid white background, removing transparency/blur */
+      background-color: #ffffff !important;
+      backdrop-filter: none !important;
+      border: 1px solid #e0e0e0 !important;
     }
 
-    /* Adjust visibility for elements inside transparent containers */
+    /* Adjust visibility for elements inside solid containers */
     #filter-sort-row input, #filter-sort-row select {
-        background-color: rgba(255, 255, 255, 0.9);
+        background-color: #ffffff;
     }
     #filter-sort-row span {
-        color: #fff !important; /* Total users count in filter row needs to be white now */
+        color: #333 !important; /* Dark text for filter row content */
     }
     #user-stats > div {
-      /* Keep the stat cards slightly opaque to preserve the gradient visual */
-      opacity: 0.9;
+      /* Keep the stat cards visible (remove transparency) */
+      opacity: 1;
     }
     .chart-wrapper #overview-report-card .info-item strong {
         color: #4facfe; /* Ensure color scheme coherence */
