@@ -1,21 +1,19 @@
 package com.rideshare.service;
 
-import com.rideshare.entity.Payment;
-import com.rideshare.entity.PaymentStatus;
-import com.rideshare.entity.DriverWallet;
-import com.rideshare.repository.PaymentRepository;
-import com.rideshare.repository.DriverWalletRepository;
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.rideshare.entity.DriverWallet;
+import com.rideshare.entity.Payment;
+import com.rideshare.entity.PaymentStatus;
+import com.rideshare.repository.DriverWalletRepository;
+import com.rideshare.repository.PaymentRepository;
 import com.stripe.Stripe;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
-import org.springframework.beans.factory.annotation.Value;
-
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 
 @Service
 public class PaymentService {

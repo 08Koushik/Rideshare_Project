@@ -36,6 +36,7 @@
 
 <div class="form-container">
     <h2>Post a Ride (Step <span id="currentStep">1</span> of 3)</h2>
+    
     <form id="postRideForm">
 
         <div id="step1" class="form-step">
@@ -106,7 +107,7 @@
 
             <div class="navigation-buttons">
                 <button type="button" onclick="prevStep()">Back (Step 2)</button>
-                <button type="submit">Post Ride</button>
+                <button type="button" id="postRideBtn" onclick="submitRide()">Post Ride</button>
             </div>
         </div>
 
@@ -115,7 +116,6 @@
 
 <datalist id="location-suggestions"></datalist>
 
-<script src="js/common.js"></script>
 <script src="js/common.js"></script>
 <script>
     // Global state for multi-step form
@@ -165,21 +165,11 @@
         }
     }
 
-    // Initialize step visibility
-    document.addEventListener('DOMContentLoaded', () => {
-        updateStepVisibility();
-
-        if (!loggedInUser || loggedInUser.roleType !== 'DRIVER') {
-            Swal.fire('Access Denied', 'Only drivers can post rides.', 'error').then(() => {
-                window.location.href = 'user-login.html';
-            });
-            return;
-        }
-
-        // Auto-fill hidden fields from loggedInUser object
-        document.getElementById('vehicle').value = loggedInUser.vehicleDetails || '';
-        document.getElementById('license').value = loggedInUser.driverLicenseNumber || '';
-    });
+    // Direct submit function for the Post Ride button
+    function submitRide() {
+        console.log('=== POST RIDE BUTTON CLICKED ===');
+        handleFormSubmit(new Event('submit'));
+    }
 
     // 1. LocationIQ Autocomplete Logic (from original file)
     const LOCATIONIQ_API_KEY = 'pk.8c6dc49f1003f5c138f99ed064ad5a43';
@@ -212,12 +202,92 @@
         }, 300);
     }
 
-    // 2. Form Submission Logic (on Step 3 submit)
-    document.getElementById('postRideForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+    // Initialize step visibility and attach event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('=== POST RIDE PAGE LOADED ===');
+        console.log('1. DOM loaded, initializing form...');
+        
+        try {
+            updateStepVisibility();
+            console.log('2. Step visibility updated');
+        } catch(e) {
+            console.error('Error updating step visibility:', e);
+        }
 
-        if (!loggedInUser || loggedInUser.roleType !== 'DRIVER') return;
-        if (!validateStep(currentStep)) return;
+        console.log('3. Checking logged in user...');
+        console.log('loggedInUser:', loggedInUser);
+        
+        if (!loggedInUser) {
+            console.error('No user found in localStorage!');
+            alert('Please login first');
+            window.location.href = 'user-login.html';
+            return;
+        }
+        
+        console.log('4. User role:', loggedInUser.roleType);
+        
+        if (loggedInUser.roleType !== 'DRIVER') {
+            console.error('User is not a driver');
+            alert('Only drivers can post rides');
+            window.location.href = 'driver-dashboard.html';
+            return;
+        }
+
+        console.log('5. User is a valid driver, proceeding...');
+
+        // Auto-fill hidden fields from loggedInUser object
+        document.getElementById('vehicle').value = loggedInUser.vehicleDetails || '';
+        document.getElementById('license').value = loggedInUser.driverLicenseNumber || '';
+        
+        // Attach form submission handler
+        console.log('6. Attaching form submit handler...');
+        const form = document.getElementById('postRideForm');
+        if (!form) {
+            console.error('Form not found!');
+            alert('Form not found!');
+            return;
+        }
+        
+        form.addEventListener('submit', handleFormSubmit);
+        console.log('7. ✅ Form ready! You can now fill and submit.');
+    });
+
+    // 2. Form Submission Logic (on Step 3 submit)
+    async function handleFormSubmit(e) {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        console.log('=== FORM SUBMIT EVENT TRIGGERED ===');
+        console.log('Form submitted, currentStep:', currentStep);
+        console.log('Logged in user:', loggedInUser);
+
+        // Ensure we're on step 3
+        if (currentStep !== 3) {
+            console.error('Form submitted but not on step 3. Current step:', currentStep);
+            alert('Please complete all steps before submitting');
+            return;
+        }
+
+        if (!loggedInUser) {
+            console.error('No user logged in');
+            alert('Please login to post rides');
+            window.location.href = 'user-login.html';
+            return;
+        }
+
+        if (loggedInUser.roleType !== 'DRIVER') {
+            console.error('User is not a driver, role:', loggedInUser.roleType);
+            alert('Only drivers can post rides');
+            return;
+        }
+        
+        if (!validateStep(currentStep)) {
+            console.error('Validation failed for step:', currentStep);
+            alert('Please fill all required fields');
+            return;
+        }
+        
+        console.log('All validations passed, proceeding with data collection...');
 
         // Collect optional pickup/drop locations into a delimited string
         const getLocations = (prefix) => {
@@ -248,7 +318,10 @@
             // vehicleImageReference is now handled by the server
         };
 
+        console.log('Ride data collected:', rideData);
+
         const fileInput = document.getElementById('vehicleImage');
+        console.log('File input files:', fileInput.files.length);
 
         // --- 2. CREATE MULTIPART FORM DATA ---
         const formData = new FormData();
@@ -258,12 +331,15 @@
             type: 'application/json'
         }));
 
-       if (fileInput.files.length > 0) {
+        if (fileInput.files.length > 0) {
             for (let i = 0; i < fileInput.files.length; i++) {
                 // Key matches the controller's @RequestPart name
                 formData.append('vehicleImages', fileInput.files[i]);
+                console.log('Added file:', fileInput.files[i].name);
             }
         }
+
+        console.log('FormData prepared, sending request...');
 
         // --- 3. SEND REQUEST WITH FormData (CRITICAL FIX) ---
         try {
@@ -273,21 +349,24 @@
                 body: formData
             });
 
+            console.log('Response status:', result.status);
+            console.log('Response ok:', result.ok);
+
             if (result.ok) {
-                Swal.fire('Success!', 'Ride posted successfully!', 'success').then(() => {
-                    window.location.href = 'driver-dashboard.html';
-                });
+                const responseData = await result.json();
+                console.log('Success response:', responseData);
+                alert('Ride posted successfully!');
+                window.location.href = 'driver-dashboard.html';
             } else {
                 const errorText = await result.text();
-                Swal.fire('Posting Failed', errorText || 'Server error during posting. Check console.', 'error');
+                console.error('Error response:', errorText);
+                alert('Posting Failed: ' + (errorText || 'Server error during posting. Check console.'));
             }
         } catch (error) {
             console.error("Fetch Error:", error);
-            Swal.fire('Connection Error', 'Could not connect to the server. Ensure backend is running.', 'error');
+            alert('Connection Error: Could not connect to the server. Ensure backend is running.');
         }
-    });
+    }
 </script>
-</body>
-</html>
 </body>
 </html>

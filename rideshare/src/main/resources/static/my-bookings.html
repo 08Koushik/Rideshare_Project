@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Bookings - RideShare</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .bookings-container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .bookings-header {
+            color: #4facfe;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+        .bookings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .bookings-table th {
+            background: #4facfe;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .bookings-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .bookings-table tr:hover {
+            background: #f8f9fa;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            display: inline-block;
+        }
+        .status-APPROVED {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-PENDING {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-REJECTED {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .no-bookings {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 1.2em;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #4facfe;
+            font-size: 1.2em;
+        }
+        .error-message {
+            text-align: center;
+            padding: 50px;
+            color: #dc3545;
+            font-size: 1.2em;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+        }
+        .pagination button {
+            background: #4facfe;
+            color: white;
+            padding: 8px 15px;
+            min-width: 40px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: #00f2fe;
+            color: #333;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination .page-info {
+            font-weight: bold;
+            color: #4facfe;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Back Button -->
+<div class="back-nav">
+    <a href="passenger-dashboard.html">&larr; Back to Dashboard</a>
+</div>
+
+<div class="bookings-container">
+    <h1 class="bookings-header">My Bookings</h1>
+    
+    <div id="bookingsContent">
+        <p class="loading">Loading your bookings...</p>
+    </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    // Pagination state
+    let allBookings = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    // Load bookings when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Page loaded, checking user:', LOGGED_IN_USER);
+        if (!LOGGED_IN_USER || !LOGGED_IN_USER.id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Not Logged In',
+                text: 'Please login to view your bookings',
+                confirmButtonColor: '#4facfe'
+            }).then(() => {
+                window.location.href = 'user-login.html';
+            });
+            return;
+        }
+        
+        if (LOGGED_IN_USER.roleType !== 'PASSENGER') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Access Denied',
+                text: 'This page is only for passengers',
+                confirmButtonColor: '#4facfe'
+            }).then(() => {
+                window.location.href = 'user-home.html';
+            });
+            return;
+        }
+        
+        loadPassengerBookings(LOGGED_IN_USER.id);
+    });
+
+    // Function to load passenger bookings
+    async function loadPassengerBookings(passengerId) {
+        const container = document.getElementById('bookingsContent');
+        container.innerHTML = '<p class="loading">Loading your bookings...</p>';
+
+        try {
+            const url = `http://localhost:8080/api/booking/passenger/${passengerId}/bookings`;
+            console.log('Fetching bookings from:', url);
+            
+            const response = await fetch(url);
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Failed to fetch bookings: ${response.status}`);
+            }
+
+            allBookings = await response.json();
+            console.log('Bookings received:', allBookings);
+            currentPage = 1;
+
+            if (allBookings.length === 0) {
+                container.innerHTML = `
+                    <div class="no-bookings">
+                        <p>📭 No bookings yet</p>
+                        <p style="font-size: 0.9em; color: #999; margin-top: 10px;">
+                            Search for rides and make your first booking!
+                        </p>
+                        <button class="search-btn" onclick="window.location.href='search-ride.html'" 
+                                style="margin-top: 20px; padding: 12px 30px; font-size: 1em;">
+                            Search Rides
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            displayBookings();
+
+        } catch (error) {
+            console.error('Error loading bookings:', error);
+            container.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Error loading bookings</p>
+                    <p style="font-size: 0.9em; margin-top: 10px;">${error.message}</p>
+                    <button class="search-btn" onclick="loadPassengerBookings(${passengerId})" 
+                            style="margin-top: 20px; padding: 12px 30px; font-size: 1em;">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    function displayBookings() {
+        const container = document.getElementById('bookingsContent');
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const bookingsToDisplay = allBookings.slice(startIndex, endIndex);
+        const totalPages = Math.ceil(allBookings.length / itemsPerPage);
+
+        let html = `
+            <div style="text-align: center; margin-bottom: 15px; color: #666;">
+                Showing ${startIndex + 1} - ${Math.min(endIndex, allBookings.length)} of ${allBookings.length} bookings
+            </div>
+            <table class="bookings-table">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Status</th>
+                        <th>Route</th>
+                        <th>Date & Time</th>
+                        <th>Seats</th>
+                        <th>Fare</th>
+                        <th>Driver Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        bookingsToDisplay.forEach(booking => {
+            const statusClass = `status-${booking.status}`;
+            const dateStr = new Date(booking.dateTime).toLocaleString();
+            
+            html += `
+                <tr>
+                    <td>#${booking.bookingId}</td>
+                    <td>
+                        <span class="status-badge ${statusClass}">${booking.status}</span>
+                    </td>
+                    <td>
+                        <strong>${booking.source}</strong> 
+                        <span style="color: #4facfe;">→</span> 
+                        <strong>${booking.destination}</strong>
+                    </td>
+                    <td>${dateStr}</td>
+                    <td>${booking.seatsBooked}</td>
+                    <td>₹${booking.totalFare.toFixed(2)}</td>
+                    <td>
+                        <strong>${booking.driverName}</strong><br>
+                        <small style="color: #666;">${booking.driverContact}</small><br>
+                        <small style="color: #999;">Vehicle: ${booking.vehicleNumber || 'N/A'}</small>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+
+        // Add pagination controls if there are multiple pages
+        if (totalPages > 1) {
+            html += `
+                <div class="pagination">
+                    <button onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>First</button>
+                    <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                    <span class="page-info">Page ${currentPage} of ${totalPages}</span>
+                    <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                    <button onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>Last</button>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function changePage(page) {
+        const totalPages = Math.ceil(allBookings.length / itemsPerPage);
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            displayBookings();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+</script>
+
+</body>
+</html>

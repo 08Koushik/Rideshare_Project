@@ -25,8 +25,11 @@
     }
     .status-BOOKED { color: green; font-weight: bold; }
     .status-REQUESTED { color: orange; font-weight: bold; }
+    .status-PENDING { color: orange; font-weight: bold; }
     .status-ACCEPTED { color: #007bff; font-weight: bold; }
+    .status-APPROVED { color: green; font-weight: bold; }
     .status-DENIED { color: red; font-weight: bold; }
+    .status-REJECTED { color: red; font-weight: bold; }
 
     .action-cell {
         display: flex;
@@ -46,6 +49,37 @@
 
     .action-btn-accept { background-color: #4CAF50; color: white; margin-right: 5px;}
     .action-btn-deny { background-color: #f44336; color: white; }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+        padding: 15px;
+    }
+    .pagination button {
+        background-color: #4facfe;
+        color: white;
+        padding: 8px 15px;
+        min-width: 40px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .pagination button:hover:not(:disabled) {
+        background-color: #00f2fe;
+        color: #333;
+    }
+    .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .pagination .page-info {
+        font-weight: bold;
+        color: #4facfe;
+    }
 
   </style>
 <!--  <style>-->
@@ -78,6 +112,11 @@
   const BASE_URL = "http://localhost:8080/api/booking";
   const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
 
+  // Pagination state
+  let allRequests = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
+
   document.addEventListener('DOMContentLoaded', () => {
     if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'DRIVER') {
         Swal.fire('Access Denied', 'Please log in as a Driver.', 'warning').then(() => {
@@ -92,7 +131,7 @@
   // --- Core Functions for Accept/Deny ---
 
   async function processRequest(bookingId, newStatus) {
-      const action = newStatus === 'ACCEPTED' ? 'Accept' : 'Deny';
+      const action = newStatus === 'APPROVED' ? 'Accept' : 'Deny';
 
       const confirmation = await Swal.fire({
           title: `${action} Request?`,
@@ -100,7 +139,7 @@
           icon: 'question',
           showCancelButton: true,
           confirmButtonText: `Yes, ${action} it!`,
-          confirmButtonColor: newStatus === 'ACCEPTED' ? '#4CAF50' : '#f44336'
+          confirmButtonColor: newStatus === 'APPROVED' ? '#4CAF50' : '#f44336'
       });
 
       if (!confirmation.isConfirmed) {
@@ -126,11 +165,11 @@
   }
 
   function acceptRequest(bookingId) {
-      processRequest(bookingId, 'ACCEPTED');
+      processRequest(bookingId, 'APPROVED');
   }
 
   function denyRequest(bookingId) {
-      processRequest(bookingId, 'DENIED');
+      processRequest(bookingId, 'REJECTED');
   }
 
   async function loadRideRequests(driverId) {
@@ -145,63 +184,98 @@
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch ride requests from the server.');
 
-        const requests = await response.json();
+        allRequests = await response.json();
+        currentPage = 1;
 
-        if (requests.length === 0) {
+        if (allRequests.length === 0) {
             container.innerHTML = '<p>No pending ride requests or bookings found.</p>';
             return;
         }
 
-        let tableHtml = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Passenger Name</th>
-                        <th>Contact</th>
-                        <th>Seats</th>
-                        <th>Route</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
-        requests.forEach(r => {
-            // Status classes rely on the exact status string from the backend (e.g., BOOKED, ACCEPTED)
-            const statusClass = `status-${r.status}`;
-
-            let actionButtons = '';
-            // Only show Accept/Deny buttons for REQUESTED bookings
-            if (r.status === 'REQUESTED') {
-                actionButtons = `
-                    <button class="small-button action-btn-accept" onclick="acceptRequest(${r.bookingId})">Accept</button>
-                    <button class="small-button action-btn-deny" onclick="denyRequest(${r.bookingId})">Deny</button>
-                `;
-            } else if (r.status === 'BOOKED' || r.status === 'ACCEPTED') {
-                actionButtons = 'Confirmed';
-            } else {
-                actionButtons = r.status;
-            }
-
-            tableHtml += `
-                <tr>
-                    <td><span class="${statusClass}">${r.status}</span></td>
-                    <td>${r.passengerName}</td>
-                    <td>${r.passengerContact}</td>
-                    <td>${r.seats}</td>
-                    <td>${r.source} &rarr; ${r.destination}</td>
-                    <td>
-                        ${actionButtons}
-                    </td>
-                </tr>`;
-        });
-
-        tableHtml += `</tbody></table>`;
-        container.innerHTML = tableHtml;
+        displayRequests();
     } catch (error) {
         Swal.fire('Error', `Failed to load ride requests: ${error.message}`, 'error');
         container.innerHTML = '<p>Error loading ride request data.</p>';
     }
+  }
+
+  function displayRequests() {
+      const container = document.getElementById('requestsTableContainer');
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const requestsToDisplay = allRequests.slice(startIndex, endIndex);
+      const totalPages = Math.ceil(allRequests.length / itemsPerPage);
+
+      let tableHtml = `
+          <div style="text-align: center; margin-bottom: 15px; color: #666;">
+              Showing ${startIndex + 1} - ${Math.min(endIndex, allRequests.length)} of ${allRequests.length} requests
+          </div>
+          <table>
+              <thead>
+                  <tr>
+                      <th>Status</th>
+                      <th>Passenger Name</th>
+                      <th>Contact</th>
+                      <th>Seats</th>
+                      <th>Route</th>
+                      <th>Action</th>
+                  </tr>
+              </thead>
+              <tbody>`;
+
+      requestsToDisplay.forEach(r => {
+          const statusClass = `status-${r.status}`;
+
+          let actionButtons = '';
+          if (r.status === 'REQUESTED' || r.status === 'PENDING') {
+              actionButtons = `
+                  <button class="small-button action-btn-accept" onclick="acceptRequest(${r.bookingId})">Accept</button>
+                  <button class="small-button action-btn-deny" onclick="denyRequest(${r.bookingId})">Deny</button>
+              `;
+          } else if (r.status === 'BOOKED' || r.status === 'ACCEPTED' || r.status === 'APPROVED') {
+              actionButtons = 'Confirmed';
+          } else {
+              actionButtons = r.status;
+          }
+
+          tableHtml += `
+              <tr>
+                  <td><span class="${statusClass}">${r.status}</span></td>
+                  <td>${r.passengerName}</td>
+                  <td>${r.passengerContact}</td>
+                  <td>${r.seats}</td>
+                  <td>${r.source} &rarr; ${r.destination}</td>
+                  <td>
+                      ${actionButtons}
+                  </td>
+              </tr>`;
+      });
+
+      tableHtml += `</tbody></table>`;
+
+      // Add pagination controls if there are multiple pages
+      if (totalPages > 1) {
+          tableHtml += `
+              <div class="pagination">
+                  <button onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>First</button>
+                  <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                  <span class="page-info">Page ${currentPage} of ${totalPages}</span>
+                  <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                  <button onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>Last</button>
+              </div>
+          `;
+      }
+
+      container.innerHTML = tableHtml;
+  }
+
+  function changePage(page) {
+      const totalPages = Math.ceil(allRequests.length / itemsPerPage);
+      if (page >= 1 && page <= totalPages) {
+          currentPage = page;
+          displayRequests();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
   }
 </script>
 </body>

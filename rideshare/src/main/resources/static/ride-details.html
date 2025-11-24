@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://js.stripe.com/v3/"></script>
 
     <style>
         /* Consistent Page Background */
@@ -158,12 +157,7 @@
 
 <script src="js/common.js"></script>
 <script>
-    // IMPORTANT: Use the Publishable Key from application.properties
-    const STRIPE_PUBLISHABLE_KEY = 'pk_test_51SPKdwQ7MCytR2QbudyenKYU4G0OviOTr5DnMKoxFMduzozaKUgjeKgDgV9tHOTDrk47UBJg1KAc7Cw44z87Yvtd00JIdFHXBN';
-    const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-
     const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
-    let elements; // Global state for Payment Element
     let rideData = null; // Global variable to hold fetched ride data
 
     document.addEventListener('DOMContentLoaded', loadRideDetails);
@@ -277,7 +271,7 @@
         document.getElementById('bookSeatBtn').disabled = false;
     }
 
-    // --- Booking Logic (Copied from ride-results.html) ---
+    // --- Booking Logic (Updated to remove payment) ---
     async function bookRide(rideId, seats, farePerSeat) {
         if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'PASSENGER') {
             Swal.fire('Access Denied', 'Please log in as a Passenger to book seats.', 'warning');
@@ -286,111 +280,59 @@
 
         const totalCost = (farePerSeat * seats).toFixed(2);
 
-        // 1. CALL BACKEND to create the Payment Intent and get the Client Secret
-        const intentUrl = `http://localhost:8080/api/booking/create-intent?rideId=${rideId}&seats=${seats}`;
+        // Confirm booking request
+        const confirmResult = await Swal.fire({
+            title: 'Confirm Booking Request',
+            html: `
+                <p>You are requesting to book <strong>${seats} seat(s)</strong></p>
+                <p>Estimated Fare: <strong>₹${totalCost}</strong></p>
+                <p style="color: #666; font-size: 0.9em;">The driver will receive your request and approve or reject it. You will be notified via email.</p>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Send Request',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!confirmResult.isConfirmed) {
+            return;
+        }
 
         try {
-            const intentResponse = await fetch(intentUrl, { method: 'POST' });
-            if (!intentResponse.ok) {
-                const errorText = await intentResponse.text();
-                throw new Error(errorText || 'Failed to initialize payment.');
-            }
-            const { clientSecret } = await intentResponse.json();
+            // Send booking request (no payment)
+            const bookingUrl = `http://localhost:8080/api/booking/book`;
 
-            // 2. Show Payment Element modal
-            const { value: paymentIntentId, isConfirmed } = await Swal.fire({
-                title: `Confirm Booking: ₹${totalCost}`,
-                html: `
-                    <p style="text-align:center; font-size:1.0em; margin-bottom: 20px;">
-                        Enter details below to confirm payment for ${seats} seat(s).
-                    </p>
-                    <div id="payment-element" style="min-height: 200px;">
-                        </div>
-                `,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonText: 'Submit Payment',
-                // CRITICAL: Initialize Payment Element when modal opens
-                didOpen: () => {
-                    elements = stripe.elements({ clientSecret });
-                    const paymentElement = elements.create('payment', {
-                        defaultValues: {
-                            billingDetails: {
-                                name: LOGGED_IN_USER.name,
-                                email: LOGGED_IN_USER.email,
-                            },
-                        },
-                    });
-                    paymentElement.mount('#payment-element');
-                },
-                // CRITICAL: Handle payment confirmation when "Submit Payment" is clicked
-                preConfirm: async () => {
-                    const { error, paymentIntent } = await stripe.confirmPayment({
-                        elements,
-                        confirmParams: {
-                            // Return URL is mandatory for handling 3DS/redirects
-                            return_url: "http://localhost:8080/ride-results.html", // Return to search results page
-                        },
-                        redirect: 'if_required',
-                    });
-
-                    if (error) {
-                        // Display validation/network errors back in the modal
-                        Swal.showValidationMessage(`Payment failed: ${error.message}`);
-                        return false;
-                    }
-
-                    if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_action') {
-                        // Return the Payment Intent ID to the booking function
-                        return paymentIntent.id;
-                    } else {
-                        Swal.showValidationMessage(`Payment status: ${paymentIntent.status}`);
-                        return false;
-                    }
-                },
+            const bookingResponse = await fetch(bookingUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rideId: rideId,
+                    passengerId: LOGGED_IN_USER.id,
+                    seatsBooked: seats,
+                })
             });
 
-            // 3. Final Booking Confirmation (Handles success or return from 3DS redirect)
-            if (isConfirmed && paymentIntentId) {
-                // Call the final booking endpoint, using the PaymentIntent ID
-                const bookingUrl = `http://localhost:8080/api/booking/book?paymentMethodId=${encodeURIComponent(paymentIntentId)}`;
+            const resultText = await bookingResponse.text();
 
-                const finalBookingResponse = await fetch(bookingUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        rideId: rideId,
-                        passengerId: LOGGED_IN_USER.id,
-                        seatsBooked: seats,
-                    })
+            if (bookingResponse.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Request Sent!',
+                    html: `
+                        <p>${resultText}</p>
+                        <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+                            You will receive an email notification when the driver responds.
+                        </p>
+                    `
+                }).then(() => {
+                    window.location.href = 'passenger-dashboard.html';
                 });
-
-                const resultText = await finalBookingResponse.text();
-
-                // IMPORTANT: The server may return STRIPE_3DS_REQUIRED: redirectUrl
-                if (resultText && resultText.startsWith('STRIPE_3DS_REQUIRED:')) {
-                        const redirectUrl = resultText.substring('STRIPE_3DS_REQUIRED:'.length);
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'Payment Redirection Required',
-                            text: 'You will be redirected to your bank to complete 3D Secure authentication.',
-                            confirmButtonText: 'Continue to Bank'
-                        }).then(() => {
-                            window.location.href = redirectUrl; // Redirect the user!
-                        });
-                } else if (finalBookingResponse.ok) {
-                    Swal.fire('Booking Success!', resultText, 'success').then(() => {
-                        // Navigate back to the dashboard or search results
-                        window.location.href = 'ride-results.html';
-                    });
-                } else {
-                    Swal.fire('Booking Failed', resultText || 'Server error during booking.', 'error');
-                }
+            } else {
+                Swal.fire('Request Failed', resultText || 'Server error during booking request.', 'error');
             }
         } catch (error) {
-            console.error("Payment flow error:", error);
-            // Catch errors from the initial create-intent call
-            Swal.fire('Error', `Failed to start payment flow: ${error.message}`, 'error');
+            console.error("Booking request error:", error);
+            Swal.fire('Error', `Failed to send booking request: ${error.message}`, 'error');
         }
     }
 </script>

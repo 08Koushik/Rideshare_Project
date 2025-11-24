@@ -3,100 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Home - RideShare</title>
+    <title>Transaction History - RideShare</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<!--    <style>-->
-<!--        body {-->
+</head>
+<body>
+<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="home-container">
+    <h2>Transaction History</h2>
+    <p id="userNameDisplay"></p>
+
+
+
+    <div id="historyTableContainer">
+        <p>Loading transactions...</p>
+    </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    const BASE_URL = "http://localhost:8080/api/auth"; // NOTE: The PaymentController uses /api/payments not /api/auth
+    const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'PASSENGER') {
+          Swal.fire('Access Denied', 'Please log in as a Passenger.', 'warning').then(() => {
+              window.location.href = 'user-login.html';
+          });
+          return;
+      }
+      document.getElementById('userNameDisplay').textContent = `Showing history for: ${LOGGED_IN_USER.name}`;
+      loadTransactionHistory(LOGGED_IN_USER.id);
+    });
+
+    async function loadTransactionHistory(passengerId) {
+      const container = document.getElementById('historyTableContainer');
+      // CRITICAL: The endpoint is /api/payments, outside the /api/auth path defined in common.js BASE_URL
+      const url = `http://localhost:8080/api/payments/passenger/${passengerId}`;
+
+      try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('Failed to fetch data.');
+
+          const payments = await response.json();
+
+          if (payments.length === 0) {
+              container.innerHTML = '<p>No transactions found.</p>';
+              return;
+          }
+
+          let tableHtml = `
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Date</th>
+                          <th>Amount (₹)</th>
+                          <th>Status</th>
+                          <th>Transaction ID</th>
+                      </tr>
+                  </thead>
+                  <tbody>`;
+
+          payments.forEach(p => {
+              tableHtml += `
+                  <tr>
+                      <td>${new Date(p.paymentDate).toLocaleString()}</td>
+                      <td>₹${p.amount.toFixed(2)}</td>
+                      <td><span style="color: ${p.status === 'SUCCESS' ? 'green' : 'red'}; font-weight: bold;">${p.status}</span></td>
+                      <td>${p.transactionId}</td>
+                  </tr>`;
+          });
+
+          tableHtml += `</tbody></table>`;
+          container.innerHTML = tableHtml;
+
+      } catch (error) {
+          Swal.fire('Error', `Failed to load history: ${error.message}`, 'error');
+          container.innerHTML = '<p>Error loading transaction data.</p>';
+      }
+    }
+</script>
+<style>
+    /* Basic table style for transaction history, borrowing from ride-results or style.css */
+
+<!--    body {-->
+<!--          /* Apply the consistent background image */-->
 <!--          background: url('images/blue_abstract_bg.png') no-repeat center center fixed;-->
 <!--          background-size: cover;-->
 <!--          margin: 0;-->
 <!--          padding: 0;-->
 <!--          font-family: 'Poppins', sans-serif;-->
 <!--        }-->
-<!--    </style>-->
-</head>
-<body>
-<!--<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>-->
-<div class="top-header">
-    <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
-    <div class="app-logo">RideShare</div>
-</div>
-<div class="home-container">
-    <h1>Welcome to RideShare!</h1>
-    <p id="welcomeMessage"></p>
-    <div class="user-details">
-        <h3>Your Details:</h3>
-        <ul>
-            <li><strong>Name:</strong> <span id="userName"></span></li>
-            <li><strong>Email:</strong> <span id="userEmail"></span></li>
-            <li><strong>Contact:</strong> <span id="userContact"></span></li>
-            <li><strong>Role:</strong> <span id="userRole"></span></li>
-            <li id="vehicleField"><strong>Vehicle No.:</strong> <span id="userVehicle"></span></li>
-            <li id="licenseField" style="display: none;"><strong>License No.:</strong> <span id="userLicense"></span></li>
-            <li id="aadharField" style="display: none;"><strong>Aadhar No.:</strong> <span id="userAadhar"></span></li>
-        </ul>
-    </div>
-    <button id="logoutBtn">Logout</button>
-</div>
 
-<script>
-    // Fetch user info from localStorage
-    const user = JSON.parse(localStorage.getItem("loggedInUser"));
-
-    if (!user) {
-<!--        alert("No user logged in. Please login first.");-->
-<!--        window.location.href = "user-login.html";-->
-Swal.fire({
-            icon: 'info',
-            title: 'Not Logged In',
-            text: "No user logged in. Please login first."
-        }).then(() => {
-            window.location.href = "user-login.html";
-        });
-    } else {
-        document.getElementById("welcomeMessage").innerText = `Hello, ${user.name}!`;
-        document.getElementById("userName").innerText = user.name;
-        document.getElementById("userEmail").innerText = user.email;
-        document.getElementById("userContact").innerText = user.contactNumber;
-        document.getElementById("userRole").innerText = user.roleType;
-
-        // Get new elements
-        const vehicleField = document.getElementById("vehicleField");
-        const licenseField = document.getElementById("licenseField");
-        const aadharField = document.getElementById("aadharField");
-
-        // Hide all optional fields initially
-        vehicleField.style.display = "none";
-        if (licenseField) licenseField.style.display = "none";
-        if (aadharField) aadharField.style.display = "none";
-
-
-        if (user.roleType === "DRIVER") {
-            // Display Driver fields
-            vehicleField.style.display = "list-item";
-            if (licenseField) licenseField.style.display = "list-item";
-
-            document.getElementById("userVehicle").innerText = user.vehicleDetails;
-            if (document.getElementById("userLicense")) document.getElementById("userLicense").innerText = user.driverLicenseNumber;
-
-        } else if (user.roleType === "PASSENGER") {
-            // Display Passenger field
-            if (aadharField) aadharField.style.display = "list-item";
-
-            if (document.getElementById("userAadhar")) document.getElementById("userAadhar").innerText = user.aadharNumber;
-        }
+    #historyTableContainer table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
     }
-
-    // Logout functionality
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem("loggedInUser");
-        window.location.href = "user-login.html";
-    });
-</script>
-<script src="js/common.js"></script>
-<script src="js/user-home.js"></script>
-
+    #historyTableContainer th, #historyTableContainer td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    #historyTableContainer th {
+      background-color: #4facfe;
+      color: white;
+    }
+</style>
 </body>
 </html>

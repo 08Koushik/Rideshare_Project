@@ -1,18 +1,19 @@
 package com.rideshare.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.rideshare.dto.DriverRideRequestDTO;
+import com.rideshare.dto.PassengerBookingDTO;
 import com.rideshare.entity.Booking;
 import com.rideshare.entity.Ride;
 import com.rideshare.entity.User;
 import com.rideshare.repository.BookingRepository;
 import com.rideshare.repository.RideRepository;
 import com.rideshare.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -77,5 +78,42 @@ public class BookingService {
         // In a real application, you would validate the status (e.g., ensure it's REQUESTED, ACCEPTED, or DENIED)
         booking.setStatus(newStatus.toUpperCase());
         return bookingRepository.save(booking);
+    }
+
+    /**
+     * Fetches all bookings for a specific passenger with ride and driver details.
+     */
+    public List<PassengerBookingDTO> getBookingsForPassenger(Long passengerId) {
+        // 1. Find all bookings made by this passenger
+        List<Booking> bookings = bookingRepository.findByPassengerId(passengerId);
+
+        // 2. Map bookings to DTOs with ride and driver details
+        return bookings.stream().map(booking -> {
+            // Fetch the associated Ride
+            Ride ride = rideRepository.findById(booking.getRideId())
+                    .orElseThrow(() -> new RuntimeException("Ride not found for booking ID: " + booking.getId()));
+
+            // Fetch Driver (User) details
+            User driver = userRepository.findById(ride.getDriverId())
+                    .orElseThrow(() -> new RuntimeException("Driver not found for ride ID: " + ride.getId()));
+
+            // Calculate total fare
+            double totalFare = ride.getFarePerSeat() * booking.getSeatsBooked();
+
+            return new PassengerBookingDTO(
+                    booking.getId(),
+                    ride.getId(),
+                    booking.getStatus(),
+                    booking.getSeatsBooked(),
+                    ride.getSource(),
+                    ride.getDestination(),
+                    ride.getDateTime(),
+                    driver.getName(),
+                    driver.getContactNumber(),
+                    driver.getVehicleDetails(),
+                    ride.getFarePerSeat(),
+                    totalFare
+            );
+        }).collect(Collectors.toList());
     }
 }

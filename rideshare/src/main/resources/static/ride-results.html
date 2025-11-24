@@ -153,6 +153,33 @@
     .swal2-popup {
       font-size: 15px !important;
     }
+
+    /* ===== Pagination Styles ===== */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding: 15px;
+    }
+
+    .pagination button {
+      padding: 8px 15px;
+      min-width: 40px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination .page-info {
+      font-weight: bold;
+      color: #4facfe;
+    }
   </style>
 </head>
 
@@ -180,6 +207,11 @@
 
   // Global state for Payment Element
   let elements;
+
+  // Pagination state
+  let allRides = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
 
   document.addEventListener('DOMContentLoaded', loadSearchResults);
 
@@ -271,6 +303,75 @@
           resultsDiv.innerHTML = '<h3>Error</h3><p>Failed to connect to backend or retrieve data.</p>';
       }
   }
+function displayRides() {
+      const resultsDiv = document.getElementById('resultsContainer');
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const ridesToDisplay = allRides.slice(startIndex, endIndex);
+      const totalPages = Math.ceil(allRides.length / itemsPerPage);
+
+      let tableHtml = `
+          <h3>Found ${allRides.length} Ride(s) - Page ${currentPage} of ${totalPages}</h3>
+          <table>
+              <thead><tr>
+                  <th>Source</th>
+                  <th>Destination</th>
+                  <th>Driver/Vehicle</th> <th>Date/Time</th>
+                  <th>Seats Left</th>
+                  <th>Fare/Seat (₹)</th>
+                  <th>Action</th>
+              </tr></thead>
+              <tbody>`;
+
+      if (ridesToDisplay.length === 0) {
+           tableHtml += '<tr><td colspan="7" style="text-align:center;">No rides match your search criteria.</td></tr>';
+      } else {
+          ridesToDisplay.forEach(ride => {
+              tableHtml += `
+                  <tr>
+                      <td>${ride.source}</td>
+                      <td>${ride.destination}</td>
+                      <td>
+                        <strong>Driver:</strong> ${ride.driverName}<br>
+                        <strong>Vehicle No:</strong> ${ride.vehicleNumber}
+                      </td>
+                      <td>${ride.dateTime.replace('T', ' ')}</td>
+                      <td>${ride.availableSeats}</td>
+                      <td>${ride.farePerSeat.toFixed(2)}</td>
+                      <td>
+                        <button class="small-button" onclick="showDriverDetails('${encodeURIComponent(JSON.stringify(ride))}')"�>Details</button>
+</td>
+                  </tr>`;
+          });
+      }
+
+      tableHtml += `</tbody></table>`;
+
+      // Add pagination controls if there are multiple pages
+      if (totalPages > 1) {
+          tableHtml += `
+              <div class="pagination">
+                  <button onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>First</button>
+                  <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                  <span class="page-info">Page ${currentPage} of ${totalPages}</span>
+                  <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                  <button onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>Last</button>
+              </div>
+          `;
+      }
+
+      resultsDiv.innerHTML = tableHtml;
+  }
+
+  function changePage(page) {
+      const totalPages = Math.ceil(allRides.length / itemsPerPage);
+      if (page >= 1 && page <= totalPages) {
+          currentPage = page;
+          displayRides();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+  }
+
 function showDriverDetails(rideJsonString) {
       // 1. Save the full ride object JSON string to session storage
       sessionStorage.setItem('selectedRideDetails', decodeURIComponent(rideJsonString));

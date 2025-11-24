@@ -11,9 +11,6 @@ public class NotificationService {
     @Autowired
     private EmailService emailService;
 
-    @Autowired(required = false)
-    private TwilioSmsService twilioSmsService;
-
     /**
      * Send booking confirmation to passenger
      */
@@ -32,11 +29,8 @@ public class NotificationService {
         );
         emailService.sendSimpleEmail(passenger.getEmail(), subject, message);
 
-        // Send SMS if Twilio is configured
-        if (twilioSmsService != null && passenger.getPhone() != null) {
-            twilioSmsService.sendSms(passenger.getPhone(), 
-                "Your ride booking has been confirmed! " + rideDetails);
-        }
+        // SMS functionality disabled - User entity doesn't have phone field
+        // If you want to enable SMS, add a phone field to the User entity
     }
 
     /**
@@ -57,11 +51,7 @@ public class NotificationService {
         );
         emailService.sendSimpleEmail(driver.getEmail(), subject, message);
 
-        // Send SMS if Twilio is configured
-        if (twilioSmsService != null && driver.getPhone() != null) {
-            twilioSmsService.sendSms(driver.getPhone(), 
-                "New booking request: " + bookingDetails);
-        }
+        // SMS functionality disabled - User entity doesn't have phone field
     }
 
     /**
@@ -82,11 +72,7 @@ public class NotificationService {
         );
         emailService.sendSimpleEmail(passenger.getEmail(), subject, message);
 
-        // Send SMS if Twilio is configured
-        if (twilioSmsService != null && passenger.getPhone() != null) {
-            twilioSmsService.sendSms(passenger.getPhone(), 
-                "Booking status updated: " + status);
-        }
+        // SMS functionality disabled - User entity doesn't have phone field
     }
 
     /**

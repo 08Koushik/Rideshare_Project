@@ -23,6 +23,38 @@
             background-color: #4facfe;
             color: white;
         }
+
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+        }
+        .pagination button {
+            background-color: #4facfe;
+            color: white;
+            padding: 8px 15px;
+            min-width: 40px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .pagination button:hover:not(:disabled) {
+            background-color: #00f2fe;
+            color: #333;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination .page-info {
+            font-weight: bold;
+            color: #4facfe;
+        }
     </style>
 <!--    <style>-->
 <!--        /* ... existing table styles ... */-->
@@ -52,6 +84,11 @@
 <script>
     const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
 
+    // Pagination state
+    let allRides = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
     document.addEventListener('DOMContentLoaded', () => {
       if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'DRIVER') {
           Swal.fire('Access Denied', 'Please log in as a Driver.', 'warning').then(() => {
@@ -72,44 +109,81 @@
           const response = await fetch(url);
           if (!response.ok) throw new Error('Failed to fetch data.');
 
-          const rides = await response.json();
+          allRides = await response.json();
+          currentPage = 1;
 
-          if (rides.length === 0) {
+          if (allRides.length === 0) {
               container.innerHTML = '<p>No rides posted yet.</p>';
               return;
           }
 
-          let tableHtml = `
-              <table>
-                  <thead>
-                      <tr>
-                          <th>Date/Time</th>
-                          <th>Route</th>
-                          <th>Seats Offered</th>
-                          <th>Fare/Seat (₹)</th>
-                          <th>ID</th>
-                      </tr>
-                  </thead>
-                  <tbody>`;
-
-          rides.forEach(r => {
-              tableHtml += `
-                  <tr>
-                      <td>${new Date(r.dateTime).toLocaleString()}</td>
-                      <td>${r.source} to ${r.destination}</td>
-                      <td>${r.availableSeats}</td>
-                      <td>₹${r.farePerSeat ? r.farePerSeat.toFixed(2) : 'N/A'}</td>
-                      <td>${r.id}</td>
-                  </tr>`;
-          });
-
-          tableHtml += `</tbody></table>`;
-          container.innerHTML = tableHtml;
+          displayRides();
 
       } catch (error) {
           Swal.fire('Error', `Failed to load ride history: ${error.message}`, 'error');
           container.innerHTML = '<p>Error loading ride data.</p>';
       }
+    }
+
+    function displayRides() {
+        const container = document.getElementById('historyTableContainer');
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const ridesToDisplay = allRides.slice(startIndex, endIndex);
+        const totalPages = Math.ceil(allRides.length / itemsPerPage);
+
+        let tableHtml = `
+            <div style="text-align: center; margin-bottom: 15px; color: #666;">
+                Showing ${startIndex + 1} - ${Math.min(endIndex, allRides.length)} of ${allRides.length} rides
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date/Time</th>
+                        <th>Route</th>
+                        <th>Seats Offered</th>
+                        <th>Fare/Seat (₹)</th>
+                        <th>ID</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        ridesToDisplay.forEach(r => {
+            tableHtml += `
+                <tr>
+                    <td>${new Date(r.dateTime).toLocaleString()}</td>
+                    <td>${r.source} to ${r.destination}</td>
+                    <td>${r.availableSeats}</td>
+                    <td>₹${r.farePerSeat ? r.farePerSeat.toFixed(2) : 'N/A'}</td>
+                    <td>${r.id}</td>
+                </tr>`;
+        });
+
+        tableHtml += `</tbody></table>`;
+
+        // Add pagination controls if there are multiple pages
+        if (totalPages > 1) {
+            tableHtml += `
+                <div class="pagination">
+                    <button onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>First</button>
+                    <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                    <span class="page-info">Page ${currentPage} of ${totalPages}</span>
+                    <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                    <button onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>Last</button>
+                </div>
+            `;
+        }
+
+        container.innerHTML = tableHtml;
+    }
+
+    function changePage(page) {
+        const totalPages = Math.ceil(allRides.length / itemsPerPage);
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            displayRides();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 </script>
 </body>

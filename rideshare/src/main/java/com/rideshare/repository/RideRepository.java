@@ -1,13 +1,13 @@
 package com.rideshare.repository;
 
-import com.rideshare.entity.Ride;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.util.List;
+import com.rideshare.entity.Ride;
 
 public interface RideRepository extends JpaRepository<Ride, Long> {
 

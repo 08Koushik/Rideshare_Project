@@ -1,10 +1,9 @@
 package com.rideshare.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.beans.factory.annotation.Value;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -104,6 +103,85 @@ public class EmailService {
             System.out.println("Booking confirmation email sent to passenger: " + toEmail);
         } catch (Exception e) {
             System.err.println("Error sending passenger booking confirmation email to " + toEmail + ": " + e.getMessage());
+        }
+    }
+
+    // Generic email sending method
+    public void sendSimpleEmail(String toEmail, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(body);
+
+        try {
+            mailSender.send(message);
+            System.out.println("Email sent to: " + toEmail);
+        } catch (Exception e) {
+            System.err.println("Error sending email to " + toEmail + ": " + e.getMessage());
+        }
+    }
+
+    // NEW METHOD 3: Send booking request notification to driver
+    public void sendBookingRequestToDriver(String toEmail, String driverName, String passengerName, 
+                                          String source, String destination, String dateTime, 
+                                          int seatsRequested, double amount, Long bookingId) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(toEmail);
+        message.setSubject("New Booking Request - RideShare");
+
+        String body = String.format(
+                "Hello %s,\n\n" +
+                        "You have received a new booking request!\n\n" +
+                        "Details:\n" +
+                        "  Passenger: %s\n" +
+                        "  Route: %s to %s\n" +
+                        "  Date & Time: %s\n" +
+                        "  Seats Requested: %d\n" +
+                        "  Amount: ₹%.2f\n" +
+                        "  Booking ID: %d\n\n" +
+                        "Please log in to your dashboard to approve or reject this request.\n\n" +
+                        "Thank you,\n" +
+                        "The RideShare Team",
+                driverName, passengerName, source, destination, dateTime, seatsRequested, amount, bookingId
+        );
+
+        message.setText(body);
+
+        try {
+            mailSender.send(message);
+            System.out.println("Booking request email sent to driver: " + toEmail);
+        } catch (Exception e) {
+            System.err.println("Error sending booking request email to " + toEmail + ": " + e.getMessage());
+        }
+    }
+
+    // NEW METHOD 4: Send booking status update to passenger
+    public void sendBookingStatusUpdate(String toEmail, String passengerName, Long bookingId, 
+                                       String status, String message) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setFrom(senderEmail);
+        mailMessage.setTo(toEmail);
+        mailMessage.setSubject("Booking Status Update - RideShare");
+
+        String body = String.format(
+                "Hello %s,\n\n" +
+                        "Your booking (ID: %d) status has been updated to: %s\n\n" +
+                        "%s\n\n" +
+                        "For more details, please log in to your RideShare account.\n\n" +
+                        "Thank you,\n" +
+                        "The RideShare Team",
+                passengerName, bookingId, status, message
+        );
+
+        mailMessage.setText(body);
+
+        try {
+            mailSender.send(mailMessage);
+            System.out.println("Booking status update email sent to passenger: " + toEmail);
+        } catch (Exception e) {
+            System.err.println("Error sending status update email to " + toEmail + ": " + e.getMessage());
         }
     }
 }
