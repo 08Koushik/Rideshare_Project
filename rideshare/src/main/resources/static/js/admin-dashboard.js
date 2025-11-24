@@ -200,7 +200,12 @@ async function loadUsers() {
 }
 
 
-// MODIFIED FUNCTION: Generic Data Viewer for Monitoring All Data
+// MODIFIED FUNCTION: Generic Data Viewer for Monitoring All Data with Pagination and Search
+let monitorDataCache = [];
+let monitorCurrentPage = 1;
+const monitorItemsPerPage = 10;
+let monitorSearchTerm = '';
+
 async function viewDataStream(title, url) {
     Swal.fire({
         title: `Loading All ${title}`,
@@ -224,51 +229,137 @@ async function viewDataStream(title, url) {
         const response = await fetch(url);
         if (!response.ok) throw new Error("Failed to fetch data.");
         const data = await response.json();
+        
+        // Store data in cache
+        monitorDataCache = data;
+        monitorCurrentPage = 1;
+        monitorSearchTerm = '';
 
-        let tableHtml = '<div style="max-height: 400px; overflow-y: auto;">';
-        if (data.length === 0) {
-            tableHtml += `<p>No ${title.toLowerCase()} found.</p>`;
-        } else {
-            // Get all keys and filter out the excluded ones
-            const allKeys = Object.keys(data[0]);
-            const filteredKeys = allKeys.filter(key => !EXCLUDED_KEYS.includes(key));
-
-            tableHtml += `<table style="width:100%; font-size: 0.8em; border-collapse: collapse;"><thead><tr>`;
-            filteredKeys.forEach(key => tableHtml += `<th style="border: 1px solid #ccc; padding: 5px; background-color: #f0f0f0;">${key}</th>`);
-            tableHtml += `</tr></thead><tbody>`;
-
-            data.slice(0, 10).forEach(item => { // Show first 10 items
-                tableHtml += `<tr>`;
-                filteredKeys.forEach(key => {
-                    let value = item[key];
-                    if (typeof value === 'object' && value !== null) {
-                        value = JSON.toString(value);
-                    }
-                    if (typeof value === 'string' && value.length > 30) {
-                        value = value.substring(0, 30) + '...'; // Truncate long strings
-                    }
-                    tableHtml += `<td style="border: 1px solid #ccc; padding: 5px; text-align: left;">${value}</td>`;
-                });
-                tableHtml += `</tr>`;
-            });
-            tableHtml += `</tbody></table>`;
-            if (data.length > 10) {
-                tableHtml += `<p style="text-align: center; margin-top: 10px;">...Showing first 10 of ${data.length} records. For full list, check backend console.</p>`;
-            }
-        }
-        tableHtml += '</div>';
-
-        Swal.fire({
-            title: `Monitoring: All ${title}`,
-            html: tableHtml,
-            width: '95%', // <-- FIX: Increased width for better table visibility
-            showConfirmButton: true,
-            confirmButtonText: 'Close',
-        });
+        displayMonitorData(title, EXCLUDED_KEYS);
 
     } catch (error) {
         Swal.fire('Error', `Failed to load ${title.toLowerCase()}: ${error.message}`, 'error');
     }
+}
+
+function displayMonitorData(title, excludedKeys) {
+    // Filter data based on search term
+    let filteredData = monitorDataCache;
+    if (monitorSearchTerm) {
+        filteredData = monitorDataCache.filter(item => {
+            return Object.values(item).some(value => {
+                if (value === null || value === undefined) return false;
+                return String(value).toLowerCase().includes(monitorSearchTerm.toLowerCase());
+            });
+        });
+    }
+
+    const totalPages = Math.ceil(filteredData.length / monitorItemsPerPage);
+    const startIndex = (monitorCurrentPage - 1) * monitorItemsPerPage;
+    const endIndex = startIndex + monitorItemsPerPage;
+    const pageData = filteredData.slice(startIndex, endIndex);
+
+    let tableHtml = '<div style="margin-bottom: 15px;">';
+    tableHtml += '<input type="text" id="monitorSearchInput" placeholder="Search..." style="padding: 8px; border: 1px solid #ccc; border-radius: 5px; width: 300px; margin-right: 10px;" value="' + monitorSearchTerm + '">';
+    tableHtml += '<span style="color: #333;">Showing ' + (startIndex + 1) + '-' + Math.min(endIndex, filteredData.length) + ' of ' + filteredData.length + ' records</span>';
+    tableHtml += '</div>';
+    
+    tableHtml += '<div style="max-height: 400px; overflow-y: auto;">';
+    if (filteredData.length === 0) {
+        tableHtml += `<p>No ${title.toLowerCase()} found.</p>`;
+    } else {
+        // Get all keys and filter out the excluded ones
+        const allKeys = Object.keys(monitorDataCache[0]);
+        const filteredKeys = allKeys.filter(key => !excludedKeys.includes(key));
+
+        tableHtml += `<table style="width:100%; font-size: 0.8em; border-collapse: collapse;"><thead><tr>`;
+        filteredKeys.forEach(key => tableHtml += `<th style="border: 1px solid #ccc; padding: 5px; background-color: #f0f0f0;">${key}</th>`);
+        tableHtml += `</tr></thead><tbody>`;
+
+        pageData.forEach(item => {
+            tableHtml += `<tr>`;
+            filteredKeys.forEach(key => {
+                let value = item[key];
+                if (typeof value === 'object' && value !== null) {
+                    value = JSON.stringify(value);
+                }
+                if (typeof value === 'string' && value.length > 30) {
+                    value = value.substring(0, 30) + '...'; // Truncate long strings
+                }
+                tableHtml += `<td style="border: 1px solid #ccc; padding: 5px; text-align: left;">${value}</td>`;
+            });
+            tableHtml += `</tr>`;
+        });
+        tableHtml += `</tbody></table>`;
+    }
+    tableHtml += '</div>';
+
+    // Add pagination controls
+    if (totalPages > 1) {
+        tableHtml += '<div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px;">';
+        tableHtml += '<button id="monitorFirstPage" style="padding: 8px 12px; background-color: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;" ' + (monitorCurrentPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '') + '>First</button>';
+        tableHtml += '<button id="monitorPrevPage" style="padding: 8px 12px; background-color: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;" ' + (monitorCurrentPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '') + '>Previous</button>';
+        tableHtml += '<span style="color: #333;">Page ' + monitorCurrentPage + ' of ' + totalPages + '</span>';
+        tableHtml += '<button id="monitorNextPage" style="padding: 8px 12px; background-color: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;" ' + (monitorCurrentPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '') + '>Next</button>';
+        tableHtml += '<button id="monitorLastPage" style="padding: 8px 12px; background-color: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;" ' + (monitorCurrentPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '') + '>Last</button>';
+        tableHtml += '</div>';
+    }
+
+    Swal.fire({
+        title: `Monitoring: All ${title}`,
+        html: tableHtml,
+        width: '95%',
+        showConfirmButton: true,
+        confirmButtonText: 'Close',
+        didOpen: () => {
+            // Attach event listeners
+            const searchInput = document.getElementById('monitorSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    monitorSearchTerm = e.target.value;
+                    monitorCurrentPage = 1;
+                    displayMonitorData(title, excludedKeys);
+                });
+            }
+
+            const firstBtn = document.getElementById('monitorFirstPage');
+            if (firstBtn) {
+                firstBtn.addEventListener('click', () => {
+                    monitorCurrentPage = 1;
+                    displayMonitorData(title, excludedKeys);
+                });
+            }
+
+            const prevBtn = document.getElementById('monitorPrevPage');
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    if (monitorCurrentPage > 1) {
+                        monitorCurrentPage--;
+                        displayMonitorData(title, excludedKeys);
+                    }
+                });
+            }
+
+            const nextBtn = document.getElementById('monitorNextPage');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    const totalPages = Math.ceil(filteredData.length / monitorItemsPerPage);
+                    if (monitorCurrentPage < totalPages) {
+                        monitorCurrentPage++;
+                        displayMonitorData(title, excludedKeys);
+                    }
+                });
+            }
+
+            const lastBtn = document.getElementById('monitorLastPage');
+            if (lastBtn) {
+                lastBtn.addEventListener('click', () => {
+                    monitorCurrentPage = Math.ceil(filteredData.length / monitorItemsPerPage);
+                    displayMonitorData(title, excludedKeys);
+                });
+            }
+        }
+    });
 }
 
 // =================== LOGIC FOR LOGOUT/DELETE (Existing) ===================
