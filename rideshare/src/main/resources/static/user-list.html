@@ -8,61 +8,66 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-<!--    body {-->
-<!--      background: url('images/blue_abstract_bg.png') no-repeat center center fixed;-->
-<!--      background-size: cover;-->
-<!--      font-family: 'Poppins', sans-serif;-->
-<!--    }-->
     .user-list-container {
-      max-width: 1200px;
-      margin: 80px auto;
-      padding: 30px;
-      /* Adjusted transparency and removed blur */
-      background-color: rgba(255, 255, 255, 0.4);
-      border-radius: 12px;
-      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.15);
-    }
-    .user-list-container h2 {
-      color: #4facfe;
-      margin-bottom: 20px;
-    }
-    #userTableContainer table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 0.9em;
-    }
-    /* Make table cells semi-transparent white */
-    #userTableContainer th, #userTableContainer td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-      /* Set content cells to semi-transparent white */
-      background-color: rgba(255, 255, 255, 0.7);
-    }
-    #userTableContainer th {
-      /* Keep header prominent */
-      background-color: #4facfe;
-      color: white;
-      cursor: pointer;
-    }
-    .action-btn {
-      padding: 5px 10px;
-      margin: 2px;
-      font-size: 0.8em;
-    }
-    .status-VERIFIED { color: green; font-weight: bold; }
-    .status-NOT-VERIFIED { color: orange; font-weight: bold; }
-    .status-BLOCKED { color: red; font-weight: bold; }
+          max-width: 1200px;
+          margin: 80px auto;
+          padding: 30px;
+          /* Adjusted transparency and removed blur */
+          background-color: rgba(255, 255, 255, 0.4);
+          border-radius: 12px;
+          box-shadow: 0 5px 30px rgba(0, 0, 0, 0.15);
+        }
+        .user-list-container h2 {
+          color: #4facfe;
+          margin-bottom: 20px;
+        }
+        #userTableContainer table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+          font-size: 0.9em;
+        }
+        /* Make table cells semi-transparent white */
+        #userTableContainer th, #userTableContainer td {
+          border: 1px solid #ddd;
+          padding: 10px;
+          text-align: left;
+          /* Set content cells to semi-transparent white */
+          background-color: rgba(255, 255, 255, 0.7);
+        }
+        #userTableContainer th {
+          /* Keep header prominent */
+          background-color: #4facfe;
+          color: white;
+          cursor: pointer;
+        }
+        .action-btn {
+          padding: 5px 10px;
+          margin: 2px;
+          font-size: 0.8em;
+        }
+        .status-VERIFIED { color: green; font-weight: bold; }
+        .status-NOT-VERIFIED { color: orange; font-weight: bold; }
+        .status-BLOCKED { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
 <div class="back-nav"><a href="admin-dashboard.html">&leftarrow; Back to Dashboard</a></div>
 
 <div class="user-list-container">
-  <h2>Manage All Users</h2>
+  <h2 id="pageTitle">Manage All Users</h2>
+
+  <div style="margin-bottom: 20px;">
+    <input type="text" id="searchUserInput" placeholder="Search by name or email..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+  </div>
   <div id="userTableContainer">
     <p>Loading user data...</p>
+  </div>
+
+  <div id="paginationControls" style="text-align: center; margin-top: 20px;">
+    <button id="prevPageBtn" disabled>Previous</button>
+    <span id="pageInfo">Page 1 of 1</span>
+    <button id="nextPageBtn" disabled>Next</button>
   </div>
 </div>
 

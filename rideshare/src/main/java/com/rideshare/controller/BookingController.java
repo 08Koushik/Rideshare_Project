@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.util.List;
 import com.rideshare.dto.ClientSecretResponse;
-import org.springframework.data.domain.Page; // NEW IMPORT
-import org.springframework.data.domain.Pageable; // NEW IMPORT
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 
 @RestController
@@ -24,25 +24,25 @@ import org.springframework.data.domain.PageRequest;
 public class BookingController {
 
     @Autowired
-    private BookingRepository bookingRepository; //
+    private BookingRepository bookingRepository;
 
     @Autowired
-    private RideRepository rideRepository; //
+    private RideRepository rideRepository;
 
     @Autowired
-    private UserRepository userRepository; //
+    private UserRepository userRepository;
 
     @Autowired
-    private PaymentService paymentService; //
+    private PaymentService paymentService;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
-    private BookingService bookingService; //
+    private BookingService bookingService;
 
     @Autowired
-    private EmailService emailService; //
+    private EmailService emailService;
 
     @PostMapping("/book")
     public String bookRide(@RequestBody Booking bookingRequest, @RequestParam String paymentMethodId) {
@@ -52,19 +52,19 @@ public class BookingController {
 
 
         Ride ride = rideRepository.findById(rideId)
-                .orElseThrow(() -> new RuntimeException("Ride not found")); //
+                .orElseThrow(() -> new RuntimeException("Ride not found"));
 
         User passenger = userRepository.findById(bookingRequest.getPassengerId())
-                .orElseThrow(() -> new RuntimeException("Passenger not found.")); //
+                .orElseThrow(() -> new RuntimeException("Passenger not found."));
 
 
-        if (passenger.isBlocked()) { //
+        if (passenger.isBlocked()) {
             throw new RuntimeException("Booking failed: Your account is currently blocked.");
         }
 
 
         User driver = userRepository.findById(ride.getDriverId())
-                .orElseThrow(() -> new RuntimeException("Driver not found for ride.")); //
+                .orElseThrow(() -> new RuntimeException("Driver not found for ride."));
 
 
 
@@ -89,7 +89,7 @@ public class BookingController {
 
 
         ride.setAvailableSeats(ride.getAvailableSeats() - seatsRequested);
-        rideRepository.save(ride); //
+        rideRepository.save(ride);
 
 
         String driverTopic = "/topic/driver/" + ride.getDriverId() + "/updates";
@@ -99,7 +99,7 @@ public class BookingController {
         messagingTemplate.convertAndSend(driverTopic, message);
 
 
-        emailService.sendBookingConfirmation( //
+        emailService.sendBookingConfirmation(
                 passenger.getEmail(),
                 passenger.getName(),
                 driver.getName(),
@@ -110,7 +110,7 @@ public class BookingController {
                 totalAmount
         );
 
-        paymentService.processDriverPayout(ride.getDriverId(), totalAmount); //
+        paymentService.processDriverPayout(ride.getDriverId(), totalAmount);
 
 
         return "Booking successful! " + paymentStatusMessage;

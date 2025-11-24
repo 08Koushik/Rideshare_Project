@@ -1,4 +1,4 @@
-// In src/main/resources/static/js/admin-dashboard.js
+// rideshare/src/main/resources/static/js/admin-dashboard.js
 
 let allUsers = [];
 let userRoleChartInstance = null; // Variable to hold the pie chart instance
@@ -16,32 +16,6 @@ if (onboardBtn) {
 document.addEventListener('DOMContentLoaded', () => {
     loadUsers();
 
-    const searchInput = document.getElementById('searchUserInput');
-    const roleFilter = document.getElementById('roleFilter');
-
-    if (searchInput) {
-        searchInput.addEventListener('input', updateDashboard);
-    }
-    if (roleFilter) {
-        roleFilter.addEventListener('change', updateDashboard);
-    }
-
-    // --- DYNAMIC NAVIGATION LOGIC (Stubs) ---
-    const navUsers = document.getElementById('navUsers');
-    const navSettings = document.getElementById('navSettings');
-
-   if (navUsers) {
-           navUsers.addEventListener('click', () => {
-
-               window.location.href = "user-list.html";
-           });
-       }
-    if (navSettings) {
-            navSettings.addEventListener('click', () => {
-
-                window.location.href = "settings.html";
-            });
-        }
     // Attach listener for the new "Monitor All Data" button
     const monitorDataBtn = document.getElementById("monitorDataBtn");
     if (monitorDataBtn) {
@@ -117,7 +91,6 @@ function updateCounts(users, isFiltered = false) {
     // 1. Calculate counts for all roles
     const driverCount = users.filter(user => user.roleType === 'DRIVER').length;
     const passengerCount = users.filter(user => user.roleType === 'PASSENGER').length;
-    const adminCount = users.filter(user => user.roleType === 'ADMIN').length;
     const totalMatchingUsers = users.length;
 
     // 2. Update the HTML badges with FILTERED/MATCHING counts
@@ -127,8 +100,8 @@ function updateCounts(users, isFiltered = false) {
 
     // 3. The overall header count reflects the total system state.
     if (!isFiltered) {
-        document.getElementById('totalUsersCountDisplay').textContent = allUsers.length;
-        // NOTE: Chart rendering is now handled by loadReports()
+        // The display logic for total users is intentionally removed from the filters row
+        // document.getElementById('totalUsersCountDisplay').textContent = allUsers.length;
     }
 }
 
@@ -163,23 +136,6 @@ async function loadReports() {
         console.error("Failed to load aggregated report data:", error);
     }
 }
-
-const getCurrentFilteredUsers = () => {
-    const searchTerm = document.getElementById('searchUserInput').value.toLowerCase();
-    const role = document.getElementById('roleFilter').value;
-
-    return allUsers.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchTerm) || user.email.toLowerCase().includes(searchTerm);
-        const matchesRole = !role || user.roleType === role;
-        return matchesSearch && matchesRole;
-    });
-};
-
-function updateDashboard() {
-    const filteredUsers = getCurrentFilteredUsers();
-    updateCounts(filteredUsers, true);
-}
-
 
 async function loadUsers() {
     if (typeof BASE_URL === 'undefined') {

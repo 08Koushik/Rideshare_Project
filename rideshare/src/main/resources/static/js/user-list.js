@@ -1,33 +1,129 @@
-// src/main/resources/static/js/user-list.js
+// rideshare/src/main/resources/static/js/user-list.js
 
 const BASE_URL_AUTH = "http://localhost:8080/api/auth";
+let allUsers = []; // Store all fetched users
+let filteredUsers = []; // Store currently filtered users (by role and search term)
+let currentPage = 0;
+const pageSize = 10;
+let totalPages = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadUserList();
+    loadAllUsersAndInitialize();
+
+    // ADDED: Event listener for search input
+    document.getElementById('searchUserInput').addEventListener('input', () => {
+        currentPage = 0; // Reset page on new search
+        applyFiltersAndRender();
+    });
+    // END ADDED
+
+    document.getElementById('prevPageBtn').addEventListener('click', () => {
+        if (currentPage > 0) {
+            currentPage--;
+            renderCurrentPage();
+        }
+    });
+
+    document.getElementById('nextPageBtn').addEventListener('click', () => {
+        if (currentPage < totalPages - 1) {
+            currentPage++;
+            renderCurrentPage();
+        }
+    });
 });
 
-async function loadUserList() {
+function getUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    const results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+}
+
+function updatePageTitle(role) {
+    const titleEl = document.getElementById('pageTitle');
+    if (role === 'DRIVER') {
+        titleEl.textContent = 'Manage Driver Accounts';
+    } else if (role === 'PASSENGER') {
+        titleEl.textContent = 'Manage Passenger Accounts';
+    } else {
+        titleEl.textContent = 'Manage All Users';
+    }
+}
+
+async function loadAllUsersAndInitialize() {
     const container = document.getElementById('userTableContainer');
     container.innerHTML = '<p>Fetching users...</p>';
+    const roleFilter = getUrlParameter('role').toUpperCase();
+    updatePageTitle(roleFilter);
 
     try {
         const response = await fetch(`${BASE_URL_AUTH}/admin/users`);
         if (!response.ok) throw new Error('Failed to fetch user data.');
 
-        const users = await response.json();
+        allUsers = await response.json();
 
-        if (users.length === 0) {
-            container.innerHTML = '<p>No users found in the system.</p>';
-            return;
-        }
-
-        renderUserTable(users);
+        // Use new function to apply filters (role and search) and render
+        applyFiltersAndRender();
 
     } catch (error) {
         console.error("Error loading user list:", error);
         container.innerHTML = `<p style="color:red;">Error loading users: ${error.message}</p>`;
     }
 }
+
+// ADDED: New function to combine filtering logic
+function applyFiltersAndRender() {
+    const roleFilter = getUrlParameter('role').toUpperCase();
+    const searchTerm = document.getElementById('searchUserInput').value.toLowerCase();
+
+    // 1. Apply Role Filter (from URL)
+    let roleFiltered = allUsers;
+    if (roleFilter && (roleFilter === 'DRIVER' || roleFilter === 'PASSENGER' || roleFilter === 'ADMIN')) {
+        roleFiltered = allUsers.filter(user => user.roleType === roleFilter);
+    }
+
+    // 2. Apply Search Filter (from input)
+    filteredUsers = roleFiltered.filter(user => {
+        const nameMatch = user.name.toLowerCase().includes(searchTerm);
+        const emailMatch = user.email.toLowerCase().includes(searchTerm);
+        // Search by name OR email
+        return nameMatch || emailMatch;
+    });
+
+    // 3. Render the first page of the newly filtered list
+    currentPage = 0;
+    totalPages = Math.ceil(filteredUsers.length / pageSize);
+    renderCurrentPage();
+}
+// END ADDED
+
+function renderCurrentPage() {
+    const container = document.getElementById('userTableContainer');
+    const start = currentPage * pageSize;
+    const end = Math.min(start + pageSize, filteredUsers.length);
+    const usersToDisplay = filteredUsers.slice(start, end);
+
+    if (filteredUsers.length === 0) {
+        container.innerHTML = `<p>No ${getUrlParameter('role').toLowerCase() || 'users'} match the current filters.</p>`;
+        updatePaginationControls(0);
+        return;
+    }
+
+    renderUserTable(usersToDisplay);
+    updatePaginationControls(filteredUsers.length);
+}
+
+function updatePaginationControls(totalElements) {
+    totalPages = Math.ceil(totalElements / pageSize);
+    const pageInfoEl = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+
+    pageInfoEl.textContent = `Page ${currentPage + 1} of ${totalPages} (Total: ${totalElements})`;
+    prevBtn.disabled = currentPage === 0;
+    nextBtn.disabled = currentPage >= totalPages - 1;
+}
+
 
 function renderUserTable(users) {
     const container = document.getElementById('userTableContainer');
@@ -66,10 +162,13 @@ function renderUserTable(users) {
             actionButtons += `<button class="action-btn" onclick="updateUserStatus(${user.id}, 'verified', true)">Verify</button>`;
         }
 
-        if (isBlocked) {
-            actionButtons += `<button class="action-btn" style="background-color:#4CAF50; color:white;" onclick="updateUserStatus(${user.id}, 'blocked', false)">Unblock</button>`;
-        } else {
-            actionButtons += `<button class="action-btn" style="background-color:#f44336; color:white;" onclick="updateUserStatus(${user.id}, 'blocked', true)">Block</button>`;
+        // Prevent blocking the admin user through this interface
+        if (user.roleType !== 'ADMIN') {
+            if (isBlocked) {
+                actionButtons += `<button class="action-btn" style="background-color:#4CAF50; color:white;" onclick="updateUserStatus(${user.id}, 'blocked', false)">Unblock</button>`;
+            } else {
+                actionButtons += `<button class="action-btn" style="background-color:#f44336; color:white;" onclick="updateUserStatus(${user.id}, 'blocked', true)">Block</button>`;
+            }
         }
 
 
@@ -116,7 +215,7 @@ async function updateUserStatus(userId, type, value) {
         }
 
         Swal.fire('Success', `User ${userId} status updated!`, 'success');
-        loadUserList(); // Reload the table
+        loadAllUsersAndInitialize(); // Reload the table
     } catch (error) {
         Swal.fire('Error', `Operation failed: ${error.message}`, 'error');
     }
