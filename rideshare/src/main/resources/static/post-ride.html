@@ -8,27 +8,20 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-<!--        body {-->
-<!--          background: url('images/blue_abstract_bg.png') no-repeat center center fixed;-->
-<!--          background-size: cover;-->
-<!--          margin: 0;-->
-<!--          padding: 0;-->
-<!--          font-family: 'Poppins', sans-serif;-->
-<!--        }-->
         /* Style for multi-step form navigation buttons */
-        .navigation-buttons {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .navigation-buttons button {
-            width: 48%;
-            padding: 10px;
-        }
-        .hidden {
-            display: none !important;
-        }
+                .navigation-buttons {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 10px;
+                    margin-top: 20px;
+                }
+                .navigation-buttons button {
+                    width: 48%;
+                    padding: 10px;
+                }
+                .hidden {
+                    display: none !important;
+                }
     </style>
 </head>
 <body>
@@ -45,8 +38,8 @@
             <label for="destination">Destination</label>
             <input type="text" id="destination" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)" required>
 
-            <label for="date">Date</label>
-            <input type="date" id="date" required>
+            <label for="dateInput">Date</label>
+            <input type="date" id="dateInput" required>
 
             <label for="time">Time</label>
             <input type="time" id="time" required>
@@ -54,8 +47,8 @@
             <label for="seats">Available Seats</label>
             <input type="number" id="seats" min="1" max="4" required>
 
-            <input type="hidden" id="vehicle" name="vehicle">
-            <input type="hidden" id="license" name="license">
+            <input type="hidden" id="vehicle" name="vehicle" aria-label="Vehicle Number">
+            <input type="hidden" id="license" name="license" aria-label="Driver License Number">
 
             <div class="navigation-buttons">
                 <button type="button" onclick="nextStep()">Next (Step 2)</button>
@@ -101,6 +94,12 @@
                 <option value="VAN">Van</option>
             </select>
 
+            <label for="isAc">Air Conditioning</label>
+            <select id="isAc" required>
+                <option value="">Select AC Status</option>
+                <option value="true">AC</option>
+                <option value="false">Non AC</option>
+            </select>
             <label for="vehicleImage">Vehicle Image</label>
             <input type="file" id="vehicleImage" accept="image/*" multiple>
 
@@ -115,7 +114,6 @@
 
 <datalist id="location-suggestions"></datalist>
 
-<script src="js/common.js"></script>
 <script src="js/common.js"></script>
 <script>
     // Global state for multi-step form
@@ -165,9 +163,31 @@
         }
     }
 
+    // FUNCTION: Set min date for the calendar to TODAY
+    function setMinDate() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        let dd = today.getDate();
+
+        // Pad month and day with leading zero if needed
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+
+        const todayString = yyyy + '-' + mm + '-' + dd;
+
+        const dateInput = document.getElementById('dateInput');
+        if (dateInput) {
+            // Set the minimum selectable date to today
+            dateInput.min = todayString;
+            // console.log("Min date set to:", todayString);
+        }
+    }
+
     // Initialize step visibility
     document.addEventListener('DOMContentLoaded', () => {
         updateStepVisibility();
+        setMinDate(); // Call the function to enforce the minimum date
 
         if (!loggedInUser || loggedInUser.roleType !== 'DRIVER') {
             Swal.fire('Access Denied', 'Only drivers can post rides.', 'error').then(() => {
@@ -219,6 +239,19 @@
         if (!loggedInUser || loggedInUser.roleType !== 'DRIVER') return;
         if (!validateStep(currentStep)) return;
 
+        // Final client-side validation check just before submission
+        const dateInput = document.getElementById('dateInput');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(dateInput.value);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        if (selectedDate < today) {
+             Swal.fire('Invalid Date', 'You cannot post a ride for a past date.', 'error');
+             return;
+        }
+
+
         // Collect optional pickup/drop locations into a delimited string
         const getLocations = (prefix) => {
             const locations = [];
@@ -234,7 +267,8 @@
             // Step 1 Fields
             source: document.getElementById('source').value,
             destination: document.getElementById('destination').value,
-            dateTime: document.getElementById('date').value + 'T' + document.getElementById('time').value + ':00',
+            // Use the value from the new input ID
+            dateTime: document.getElementById('dateInput').value + 'T' + document.getElementById('time').value + ':00',
             availableSeats: parseInt(document.getElementById('seats').value),
             driverId: loggedInUser.id,
 
@@ -245,6 +279,7 @@
             // Step 3 Fields
             vehicleName: document.getElementById('vehicleName').value,
             vehicleType: document.getElementById('vehicleType').value,
+            isAc: document.getElementById('isAc').value === 'true', // NEW FIELD: Convert string 'true'/'false' to boolean
             // vehicleImageReference is now handled by the server
         };
 
@@ -287,7 +322,3 @@
         }
     });
 </script>
-</body>
-</html>
-</body>
-</html>

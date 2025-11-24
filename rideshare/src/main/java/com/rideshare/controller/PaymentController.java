@@ -5,6 +5,9 @@ import com.rideshare.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import org.springframework.data.domain.Page; // NEW IMPORT
+import org.springframework.data.domain.Pageable; // NEW IMPORT
+import org.springframework.data.domain.PageRequest;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -13,10 +16,14 @@ public class PaymentController {
     @Autowired
     private PaymentRepository paymentRepository;
 
-    // Endpoint to get all payments/transactions for a passenger
     @GetMapping("/passenger/{passengerId}")
-    public List<Payment> getPassengerHistory(@PathVariable Long passengerId) {
-        return paymentRepository.findByPassengerId(passengerId);
+    public Page<Payment> getPassengerHistory(
+            @PathVariable Long passengerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return paymentRepository.findByPassengerId(passengerId, pageable); //
     }
     @GetMapping("/admin/payments")
     public List<Payment> getAllPayments() {

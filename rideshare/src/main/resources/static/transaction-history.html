@@ -11,14 +11,18 @@
 <body>
 <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
 
-<div class="home-container">
+<div class="home-container" style="max-width: 90%; margin: 80px auto;">
     <h2>Transaction History</h2>
     <p id="userNameDisplay"></p>
 
-
-
     <div id="historyTableContainer">
         <p>Loading transactions...</p>
+    </div>
+
+    <div id="paginationControls" style="text-align: center; margin-top: 20px;">
+        <button id="prevPageBtn" disabled>Previous</button>
+        <span id="pageInfo">Page 1 of 1</span>
+        <button id="nextPageBtn" disabled>Next</button>
     </div>
 </div>
 
@@ -26,6 +30,10 @@
 <script>
     const BASE_URL = "http://localhost:8080/api/auth"; // NOTE: The PaymentController uses /api/payments not /api/auth
     const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+    let currentPage = 0; // Spring Data pages start at 0
+    const pageSize = 10;
+    let totalPages = 1;
+
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'PASSENGER') {
@@ -35,23 +43,55 @@
           return;
       }
       document.getElementById('userNameDisplay').textContent = `Showing history for: ${LOGGED_IN_USER.name}`;
-      loadTransactionHistory(LOGGED_IN_USER.id);
+      loadTransactionHistory(LOGGED_IN_USER.id, currentPage);
+
+      document.getElementById('prevPageBtn').addEventListener('click', () => {
+          if (currentPage > 0) {
+              currentPage--;
+              loadTransactionHistory(LOGGED_IN_USER.id, currentPage);
+          }
+      });
+
+      document.getElementById('nextPageBtn').addEventListener('click', () => {
+          if (currentPage < totalPages - 1) {
+              currentPage++;
+              loadTransactionHistory(LOGGED_IN_USER.id, currentPage);
+          }
+      });
     });
 
-    async function loadTransactionHistory(passengerId) {
+    function updatePaginationControls(page) {
+        totalPages = page.totalPages;
+        currentPage = page.number;
+
+        document.getElementById('pageInfo').textContent = `Page ${currentPage + 1} of ${totalPages} (Total: ${page.totalElements})`;
+        document.getElementById('prevPageBtn').disabled = !page.hasPrevious;
+        document.getElementById('nextPageBtn').disabled = !page.hasNext;
+    }
+
+    async function loadTransactionHistory(passengerId, pageNum) {
       const container = document.getElementById('historyTableContainer');
+      container.innerHTML = '<p>Loading transactions...</p>';
+
       // CRITICAL: The endpoint is /api/payments, outside the /api/auth path defined in common.js BASE_URL
-      const url = `http://localhost:8080/api/payments/passenger/${passengerId}`;
+      // MODIFIED URL: Added pagination parameters
+      const url = `http://localhost:8080/api/payments/passenger/${passengerId}?page=${pageNum}&size=${pageSize}`;
 
       try {
           const response = await fetch(url);
           if (!response.ok) throw new Error('Failed to fetch data.');
 
-          const payments = await response.json();
+          const page = await response.json();
+          const payments = page.content;
+          updatePaginationControls(page);
 
-          if (payments.length === 0) {
+          if (payments.length === 0 && pageNum === 0) {
               container.innerHTML = '<p>No transactions found.</p>';
               return;
+          }
+          if (payments.length === 0) {
+               container.innerHTML = '<p>No more results on this page.</p>';
+               return;
           }
 
           let tableHtml = `
@@ -88,28 +128,25 @@
 <style>
     /* Basic table style for transaction history, borrowing from ride-results or style.css */
 
-<!--    body {-->
-<!--          /* Apply the consistent background image */-->
-<!--          background: url('images/blue_abstract_bg.png') no-repeat center center fixed;-->
-<!--          background-size: cover;-->
-<!--          margin: 0;-->
-<!--          padding: 0;-->
-<!--          font-family: 'Poppins', sans-serif;-->
-<!--        }-->
-
     #historyTableContainer table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
-    #historyTableContainer th, #historyTableContainer td {
+    /* ENHANCED FIX: Restore header color */
+    #historyTableContainer th {
+      background-color: #4facfe;
+      color: white;
       border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
     }
-    #historyTableContainer th {
-      background-color: #4facfe;
-      color: white;
+    /* ENHANCED FIX: Ensure data rows are white with borders */
+    #historyTableContainer td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+      background-color: white; /* Ensure white background */
     }
 </style>
 </body>

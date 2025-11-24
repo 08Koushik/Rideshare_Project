@@ -37,15 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
            });
        }
     if (navSettings) {
-        navSettings.addEventListener('click', () => {
-            Swal.fire({
-                icon: 'info',
-                title: 'Settings Page',
-                text: 'This page is for administrative settings (Pending: Implement settings.html).'
-            });
-        });
-    }
+            navSettings.addEventListener('click', () => {
 
+                window.location.href = "settings.html";
+            });
+        }
     // Attach listener for the new "Monitor All Data" button
     const monitorDataBtn = document.getElementById("monitorDataBtn");
     if (monitorDataBtn) {

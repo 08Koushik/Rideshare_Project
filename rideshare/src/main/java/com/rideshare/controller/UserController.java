@@ -90,6 +90,16 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    // NEW ENDPOINT: Update User Status (Admin function)
+    @PostMapping("/admin/user/{userId}/status")
+    public User updateStatus(
+            @PathVariable Long userId,
+            @RequestParam String type,
+            @RequestParam boolean value
+    ) {
+        return userService.updateUserStatus(userId, type, value);
+    }
+
     @DeleteMapping("/delete-all-users")
     public ResponseEntity<String> deleteAllUsers() {
         userService.deleteAllUsers();

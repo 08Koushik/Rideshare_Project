@@ -24,6 +24,8 @@ public class RideDetailsResponse {
     private String vehicleNumber; // From User Entity (vehicleDetails)
     private List<String> vehicleImageReferences; // From Ride Entity
 
+    private Boolean isAc; // NEW FIELD: AC status
+
     // Constructor to map data from Ride and User entities
     public RideDetailsResponse(Ride ride, User driver,List<String> imageRefs) {
         this.rideId = ride.getId();
@@ -37,12 +39,14 @@ public class RideDetailsResponse {
         this.driverName = driver.getName();
         this.driverContact = driver.getContactNumber();
         this.driverLicenseNumber = driver.getDriverLicenseNumber();
-        this.vehicleNumber = driver.getVehicleDetails(); // Vehicle number is stored here
+        this.vehicleNumber = driver.getVehicleDetails();
 
         // Map Vehicle Details (from Ride entity fields added previously)
         this.vehicleName = ride.getVehicleName();
         this.vehicleType = ride.getVehicleType();
         this.vehicleImageReferences = imageRefs;
+
+        this.isAc = ride.getIsAc(); // NEW MAPPING
     }
 
     // --- Getters and Setters ---
@@ -86,5 +90,7 @@ public class RideDetailsResponse {
     public List<String> getVehicleImageReferences() { return vehicleImageReferences; }
     public void setVehicleImageReferences(List<String> vehicleImageReferences) { this.vehicleImageReferences = vehicleImageReferences; }
 
-
+    // NEW GETTERS/SETTERS
+    public Boolean getIsAc() { return isAc; }
+    public void setIsAc(Boolean isAc) { this.isAc = isAc; }
 }

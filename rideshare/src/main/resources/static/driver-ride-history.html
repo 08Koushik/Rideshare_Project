@@ -14,43 +14,47 @@
             border-collapse: collapse;
             margin-top: 20px;
         }
-        #historyTableContainer th, #historyTableContainer td {
+        /* ENHANCED FIX: Restore header color */
+        #historyTableContainer th {
+            background-color: #4facfe;
+            color: white;
             border: 1px solid #ccc;
             padding: 10px;
             text-align: center;
         }
-        #historyTableContainer th {
-            background-color: #4facfe;
-            color: white;
+        /* ENHANCED FIX: Ensure data rows are white with borders */
+        #historyTableContainer td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+            background-color: white; /* Ensure white background */
         }
     </style>
-<!--    <style>-->
-<!--        /* ... existing table styles ... */-->
-<!--        /* NEW: Ensure the body uses the correct background image */-->
-<!--        body {-->
-<!--          background: url('images/blue_abstract_bg.png') no-repeat center center fixed;-->
-<!--          background-size: cover;-->
-<!--          margin: 0;-->
-<!--          padding: 0;-->
-<!--          font-family: 'Poppins', sans-serif;-->
-<!--        }-->
-<!--    </style>-->
 </head>
 <body>
 <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
 
-<div class="home-container">
+<div class="home-container" style="max-width: 90%; margin: 80px auto;">
     <h2>Your Posted Rides History</h2>
     <p id="userNameDisplay"></p>
 
     <div id="historyTableContainer">
         <p>Loading rides...</p>
     </div>
+
+    <div id="paginationControls" style="text-align: center; margin-top: 20px;">
+        <button id="prevPageBtn" disabled>Previous</button>
+        <span id="pageInfo">Page 1 of 1</span>
+        <button id="nextPageBtn" disabled>Next</button>
+    </div>
 </div>
 
 <script src="js/common.js"></script>
 <script>
     const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+    let currentPage = 0; // Spring Data pages start at 0
+    const pageSize = 10;
+    let totalPages = 1;
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'DRIVER') {
@@ -60,23 +64,54 @@
           return;
       }
       document.getElementById('userNameDisplay').textContent = `Showing posted rides for: ${LOGGED_IN_USER.name}`;
-      loadDriverRideHistory(LOGGED_IN_USER.id);
+      loadDriverRideHistory(LOGGED_IN_USER.id, currentPage);
+
+      document.getElementById('prevPageBtn').addEventListener('click', () => {
+          if (currentPage > 0) {
+              currentPage--;
+              loadDriverRideHistory(LOGGED_IN_USER.id, currentPage);
+          }
+      });
+
+      document.getElementById('nextPageBtn').addEventListener('click', () => {
+          if (currentPage < totalPages - 1) {
+              currentPage++;
+              loadDriverRideHistory(LOGGED_IN_USER.id, currentPage);
+          }
+      });
     });
 
-    async function loadDriverRideHistory(driverId) {
+    function updatePaginationControls(page) {
+        totalPages = page.totalPages;
+        currentPage = page.number;
+
+        document.getElementById('pageInfo').textContent = `Page ${currentPage + 1} of ${totalPages} (Total: ${page.totalElements})`;
+        document.getElementById('prevPageBtn').disabled = !page.hasPrevious;
+        document.getElementById('nextPageBtn').disabled = !page.hasNext;
+    }
+
+    async function loadDriverRideHistory(driverId, pageNum) {
       const container = document.getElementById('historyTableContainer');
-      // CRITICAL: Call the new endpoint in RideController
-      const url = `http://localhost:8080/api/rides/driver/${driverId}/history`;
+      container.innerHTML = '<p>Loading rides...</p>';
+
+      // MODIFIED URL: Added pagination parameters
+      const url = `http://localhost:8080/api/rides/driver/${driverId}/history?page=${pageNum}&size=${pageSize}`;
 
       try {
           const response = await fetch(url);
           if (!response.ok) throw new Error('Failed to fetch data.');
 
-          const rides = await response.json();
+          const page = await response.json();
+          const rides = page.content;
+          updatePaginationControls(page);
 
-          if (rides.length === 0) {
+          if (rides.length === 0 && pageNum === 0) {
               container.innerHTML = '<p>No rides posted yet.</p>';
               return;
+          }
+          if (rides.length === 0) {
+               container.innerHTML = '<p>No more results on this page.</p>';
+               return;
           }
 
           let tableHtml = `
@@ -87,7 +122,6 @@
                           <th>Route</th>
                           <th>Seats Offered</th>
                           <th>Fare/Seat (₹)</th>
-                          <th>ID</th>
                       </tr>
                   </thead>
                   <tbody>`;
@@ -99,7 +133,6 @@
                       <td>${r.source} to ${r.destination}</td>
                       <td>${r.availableSeats}</td>
                       <td>₹${r.farePerSeat ? r.farePerSeat.toFixed(2) : 'N/A'}</td>
-                      <td>${r.id}</td>
                   </tr>`;
           });
 

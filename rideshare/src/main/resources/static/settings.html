@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - RideShare</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="back-nav"><a href="admin-dashboard.html">&leftarrow; Back to Dashboard</a></div>
+
+<div class="form-container" style="max-width: 600px;">
+    <h2><i class="fas fa-cog"></i> Platform Settings</h2>
+    <p style="text-align: center; color: #555;">Manage core business logic variables for pricing and operations.</p>
+
+    <form id="settingsForm">
+
+        <h3>Pricing Configuration</h3>
+        <label for="baseFare">Base Fare (₹)</label>
+        <input type="number" id="baseFare" name="baseFare" value="50.0" min="0" step="0.1" required>
+
+        <label for="ratePerKm">Rate Per Kilometer (₹/km)</label>
+        <input type="number" id="ratePerKm" name="ratePerKm" value="8.5" min="0" step="0.1" required>
+
+        <h3>Commission Settings</h3>
+        <label for="commissionRate">Driver Commission Rate (%)</label>
+        <input type="number" id="commissionRate" name="commissionRate" value="10.0" min="0" max="100" step="0.1" required>
+
+        <button type="submit">Save All Settings</button>
+    </form>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    // Placeholder values reflecting GeoService.java and PaymentService.java
+    // NOTE: In a real app, these should be loaded from the backend config/database.
+    const BASE_FARE = 50.0;
+    const RATE_PER_KM = 8.5;
+    const COMMISSION_RATE_PERCENT = 10.0;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Load initial placeholder values (or fetch from API if implemented)
+        document.getElementById('baseFare').value = BASE_FARE;
+        document.getElementById('ratePerKm').value = RATE_PER_KM;
+        document.getElementById('commissionRate').value = COMMISSION_RATE_PERCENT;
+    });
+
+    document.getElementById('settingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // This simulates applying the changes
+        const newBaseFare = document.getElementById('baseFare').value;
+        const newRatePerKm = document.getElementById('ratePerKm').value;
+        const newCommissionRate = document.getElementById('commissionRate').value;
+
+        // NOTE: In a complete implementation, this is where you would call a
+        // new API endpoint (e.g., POST /api/admin/config) to update the backend
+        // values in GeoService and PaymentService.
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Settings Saved',
+            html: `Simulated saving complete. <br>New Base Fare: ₹${newBaseFare}<br>New Commission: ${newCommissionRate}%`,
+            confirmButtonText: 'OK'
+        });
+    });
+</script>
+</body>
+</html>

@@ -24,6 +24,10 @@ public class User {
     private String driverLicenseNumber;
     private String aadharNumber;
 
+    // NEW FIELDS FOR ADMIN STATUS MANAGEMENT
+    private boolean verified = false;  // Default is false
+    private boolean blocked = false;   // Default is false
+
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -54,4 +58,11 @@ public class User {
 
     public String getAadharNumber() { return aadharNumber; }
     public void setAadharNumber(String aadharNumber) { this.aadharNumber = aadharNumber; }
+
+    // NEW GETTERS & SETTERS
+    public boolean isVerified() { return verified; } //
+    public void setVerified(boolean verified) { this.verified = verified; } //
+
+    public boolean isBlocked() { return blocked; } //
+    public void setBlocked(boolean blocked) { this.blocked = blocked; } //
 }

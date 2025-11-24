@@ -60,9 +60,12 @@ function renderUserTable(users) {
 
         // Action Buttons
         let actionButtons = '';
-        if (user.roleType === 'DRIVER' && !isVerified) {
+
+        // MODIFIED LOGIC: Show Verify button if the user is a DRIVER OR PASSENGER and is NOT verified.
+        if ((user.roleType === 'DRIVER' || user.roleType === 'PASSENGER') && !isVerified) {
             actionButtons += `<button class="action-btn" onclick="updateUserStatus(${user.id}, 'verified', true)">Verify</button>`;
         }
+
         if (isBlocked) {
             actionButtons += `<button class="action-btn" style="background-color:#4CAF50; color:white;" onclick="updateUserStatus(${user.id}, 'blocked', false)">Unblock</button>`;
         } else {

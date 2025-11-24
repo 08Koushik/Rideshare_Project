@@ -13,70 +13,78 @@
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
+        table-layout: auto;
     }
-    #requestsTableContainer th, #requestsTableContainer td {
+    /* ENHANCED FIX: Restore header color */
+    #requestsTableContainer th {
+        background-color: #4facfe;
+        color: white;
         border: 1px solid #ccc;
         padding: 10px;
         text-align: center;
     }
-    #requestsTableContainer th {
-        background-color: #4facfe;
-        color: white;
+    /* ENHANCED FIX: Ensure data rows are white with borders */
+    #requestsTableContainer td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+        background-color: white; /* Ensure white background */
     }
-    .status-BOOKED { color: green; font-weight: bold; }
+
+    .status-BOOKED, .status-ACCEPTED { color: green; font-weight: bold; }
     .status-REQUESTED { color: orange; font-weight: bold; }
-    .status-ACCEPTED { color: #007bff; font-weight: bold; }
+    .status-CANCELLED { color: red; font-weight: bold; }
+    .status-RESCHEDULED { color: #ffc107; font-weight: bold; }
     .status-DENIED { color: red; font-weight: bold; }
 
     .action-cell {
         display: flex;
-        flex-direction: column; /* Stack buttons vertically */
-        align-items: center;    /* Center the stack in the column */
-        gap: 5px;               /* Small gap between the buttons */
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
     }
 
     /* Refine small button size */
     .small-button {
-        padding: 5px 10px;      /* Smaller padding */
-        font-size: 0.9em;       /* Slightly smaller font */
-        width: 100%;            /* Force button to take full width of the stack (needs max-width) */
-        max-width: 80px;        /* Constraint the maximum width */
-        margin: 0 !important;   /* Remove extraneous margins from other styles */
+        padding: 5px 10px;
+        font-size: 0.9em;
+        width: 100%;
+        max-width: 100px;
+        margin: 0 !important;
     }
 
-    .action-btn-accept { background-color: #4CAF50; color: white; margin-right: 5px;}
+    .action-btn-accept { background-color: #4CAF50; color: white; }
     .action-btn-deny { background-color: #f44336; color: white; }
+    .action-btn-reschedule { background-color: #ffc100; color: #333; }
+    .action-btn-cancel { background-color: #f44336; color: white; }
 
   </style>
-<!--  <style>-->
-<!--    /* ... existing table styles ... */-->
-<!--    /* NEW: Ensure the body uses the correct background image */-->
-<!--    body {-->
-<!--      background: url('images/blue_abstract_bg.png') no-repeat center center fixed;-->
-<!--      background-size: cover;-->
-<!--      margin: 0;-->
-<!--      padding: 0;-->
-<!--      font-family: 'Poppins', sans-serif;-->
-<!--    }-->
-<!--  </style>-->
 </head>
 <body>
 <div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
 
-<div class="home-container">
+<div class="home-container" style="max-width: 90%; margin: 80px auto;">
   <h2>Pending Ride Requests & Bookings</h2>
   <p id="driverNameDisplay"></p>
 
   <div id="requestsTableContainer">
     <p>Loading requests...</p>
   </div>
+
+  <div id="paginationControls" style="text-align: center; margin-top: 20px;">
+    <button id="prevPageBtn" disabled>Previous</button>
+    <span id="pageInfo">Page 1 of 1</span>
+    <button id="nextPageBtn" disabled>Next</button>
+  </div>
 </div>
 
 <script src="js/common.js"></script>
 <script>
-  // UPDATED: Base URL now points to the Booking Controller
   const BASE_URL = "http://localhost:8080/api/booking";
   const LOGGED_IN_USER = JSON.parse(localStorage.getItem("loggedInUser"));
+  let currentPage = 0;
+  const pageSize = 10;
+  let totalPages = 1;
 
   document.addEventListener('DOMContentLoaded', () => {
     if (!LOGGED_IN_USER || LOGGED_IN_USER.roleType !== 'DRIVER') {
@@ -86,31 +94,93 @@
         return;
     }
     document.getElementById('driverNameDisplay').textContent = `Showing requests for: ${LOGGED_IN_USER.name}`;
-    loadRideRequests(LOGGED_IN_USER.id);
+    loadRideRequests(LOGGED_IN_USER.id, currentPage);
+
+    document.getElementById('prevPageBtn').addEventListener('click', () => {
+        if (currentPage > 0) {
+            currentPage--;
+            loadRideRequests(LOGGED_IN_USER.id, currentPage);
+        }
+    });
+
+    document.getElementById('nextPageBtn').addEventListener('click', () => {
+        if (currentPage < totalPages - 1) {
+            currentPage++;
+            loadRideRequests(LOGGED_IN_USER.id, currentPage);
+        }
+    });
   });
 
-  // --- Core Functions for Accept/Deny ---
+  function updatePaginationControls(page) {
+      totalPages = page.totalPages;
+      currentPage = page.number;
+
+      document.getElementById('pageInfo').textContent = `Page ${currentPage + 1} of ${totalPages} (Total: ${page.totalElements})`;
+      document.getElementById('prevPageBtn').disabled = !page.hasPrevious;
+      document.getElementById('nextPageBtn').disabled = !page.hasNext;
+  }
 
   async function processRequest(bookingId, newStatus) {
-      const action = newStatus === 'ACCEPTED' ? 'Accept' : 'Deny';
+      const action = newStatus;
+      let title = `${action} Request?`;
+      let text = `Are you sure you want to ${action.toLowerCase()} this ride request?`;
+      let confirmButtonColor = '#4CAF50';
 
-      const confirmation = await Swal.fire({
-          title: `${action} Request?`,
-          text: `Are you sure you want to ${action.toLowerCase()} this ride request?`,
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: `Yes, ${action} it!`,
-          confirmButtonColor: newStatus === 'ACCEPTED' ? '#4CAF50' : '#f44336'
-      });
+      let rescheduleDate = null;
 
-      if (!confirmation.isConfirmed) {
-          return;
+      if (action === 'RESCHEDULED') {
+          title = 'Reschedule Ride?';
+          confirmButtonColor = '#ffc100';
+
+          const { value: formValues } = await Swal.fire({
+              title: title,
+              html:
+                  '<p style="text-align: center;">Please enter the new date and time for this ride:</p>' +
+                  '<input id="swal-input1" class="swal2-input" type="date" placeholder="New Date">' +
+                  '<input id="swal-input2" class="swal2-input" type="time" placeholder="New Time">',
+              focusConfirm: false,
+              showCancelButton: true,
+              confirmButtonText: 'Yes, Reschedule!',
+              confirmButtonColor: confirmButtonColor,
+              preConfirm: () => {
+                  const date = document.getElementById('swal-input1').value;
+                  const time = document.getElementById('swal-input2').value;
+                  if (!date || !time) {
+                      Swal.showValidationMessage('Please enter both date and time');
+                      return false;
+                  }
+                  return date + 'T' + time + ':00';
+              }
+          });
+
+          if (!formValues) return;
+          rescheduleDate = formValues;
       }
 
-      // --- REAL API CALL to update status ---
+      if (action !== 'RESCHEDULED') {
+          if (action === 'CANCELLED') confirmButtonColor = '#f44336';
+
+          const confirmation = await Swal.fire({
+              title: title,
+              text: text,
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonText: `Yes, ${action} it!`,
+              confirmButtonColor: confirmButtonColor
+          });
+
+          if (!confirmation.isConfirmed) {
+              return;
+          }
+      }
+
       try {
-          // Calls POST /api/booking/{bookingId}/status?status={newStatus}
-          const url = `${BASE_URL}/${bookingId}/status?status=${newStatus}`;
+          let url = `${BASE_URL}/${bookingId}/status?status=${newStatus}`;
+
+          if (newStatus === 'RESCHEDULED') {
+             url += `&newDateTime=${encodeURIComponent(rescheduleDate)}`;
+          }
+
           const response = await fetch(url, { method: 'POST' });
 
           if (!response.ok) {
@@ -119,37 +189,38 @@
           }
 
           Swal.fire('Success!', `Request ID ${bookingId} has been ${newStatus.toLowerCase()}!`, 'success');
-          loadRideRequests(LOGGED_IN_USER.id); // Reload table to reflect new status
+          loadRideRequests(LOGGED_IN_USER.id, currentPage);
       } catch (error) {
            Swal.fire('Error', `Failed to ${action.toLowerCase()} request: ${error.message}`, 'error');
       }
   }
 
-  function acceptRequest(bookingId) {
-      processRequest(bookingId, 'ACCEPTED');
+  function rescheduleRequest(bookingId) {
+      processRequest(bookingId, 'RESCHEDULED');
   }
 
-  function denyRequest(bookingId) {
-      processRequest(bookingId, 'DENIED');
-  }
-
-  async function loadRideRequests(driverId) {
+  async function loadRideRequests(driverId, pageNum) {
     const container = document.getElementById('requestsTableContainer');
     container.innerHTML = '<p>Loading requests...</p>';
 
-    // --- REAL API CALL to fetch requests for the driver ---
-    // Calls GET /api/booking/driver/{driverId}/requests
-    const url = `${BASE_URL}/driver/${driverId}/requests`;
+    // MODIFIED URL: Added pagination parameters
+    const url = `${BASE_URL}/driver/${driverId}/requests?page=${pageNum}&size=${pageSize}`;
 
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch ride requests from the server.');
 
-        const requests = await response.json();
+        const page = await response.json();
+        const requests = page.content;
+        updatePaginationControls(page);
 
-        if (requests.length === 0) {
+        if (requests.length === 0 && pageNum === 0) {
             container.innerHTML = '<p>No pending ride requests or bookings found.</p>';
             return;
+        }
+        if (requests.length === 0) {
+             container.innerHTML = '<p>No more results on this page.</p>';
+             return;
         }
 
         let tableHtml = `
@@ -167,18 +238,21 @@
                 <tbody>`;
 
         requests.forEach(r => {
-            // Status classes rely on the exact status string from the backend (e.g., BOOKED, ACCEPTED)
             const statusClass = `status-${r.status}`;
 
             let actionButtons = '';
-            // Only show Accept/Deny buttons for REQUESTED bookings
             if (r.status === 'REQUESTED') {
                 actionButtons = `
-                    <button class="small-button action-btn-accept" onclick="acceptRequest(${r.bookingId})">Accept</button>
-                    <button class="small-button action-btn-deny" onclick="denyRequest(${r.bookingId})">Deny</button>
+                    <button class="small-button action-btn-accept" onclick="processRequest(${r.bookingId}, 'ACCEPTED')">Accept</button>
+                    <button class="small-button action-btn-reschedule" onclick="rescheduleRequest(${r.bookingId})">Reschedule</button>
+                    <button class="small-button action-btn-cancel" onclick="processRequest(${r.bookingId}, 'CANCELLED')">Cancel</button>
                 `;
             } else if (r.status === 'BOOKED' || r.status === 'ACCEPTED') {
                 actionButtons = 'Confirmed';
+            } else if (r.status === 'CANCELLED') {
+                actionButtons = 'Cancelled';
+            } else if (r.status === 'RESCHEDULED') {
+                actionButtons = 'Rescheduled';
             } else {
                 actionButtons = r.status;
             }
@@ -190,7 +264,7 @@
                     <td>${r.passengerContact}</td>
                     <td>${r.seats}</td>
                     <td>${r.source} &rarr; ${r.destination}</td>
-                    <td>
+                    <td class="action-cell">
                         ${actionButtons}
                     </td>
                 </tr>`;

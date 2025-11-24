@@ -12,74 +12,77 @@ if (userLoginForm) {
         // --- CLEAN RETRIEVAL ---
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
-        const role = document.getElementById("role").value; // NEW: Get selected role
+        // const role = document.getElementById("role").value; // REMOVED
 
         // Check for empty values immediately
-        if (!email || !password || !role) {
+        if (!email || !password) {
             Swal.fire({
                             icon: 'warning',
                             title: 'Required Fields',
-                            text: "Please enter both email and password, and select a login role."
+                            text: "Please enter both email and password."
                         });
             return;
         }
 
         let fetchUrl;
 
-        if (role === 'ADMIN') {
-            // Admin Login Endpoint (Admin controller expects query params)
-            fetchUrl = `${BASE_URL}/admin/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-        } else {
-            // User Login Endpoint (User controller expects query params)
-            fetchUrl = `${BASE_URL}/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-        }
+        // --- NEW LOGIN STRATEGY: Try User Login first, then Admin Login ---
 
-        console.log("Attempting to fetch URL:", fetchUrl);
+        // 1. Try Standard User Login (Passenger/Driver)
+        fetchUrl = `${BASE_URL}/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
 
         try {
-            const response = await fetch(fetchUrl, { method: "POST" });
-            const resultText = await response.text();
+            let response = await fetch(fetchUrl, { method: "POST" });
+            let resultText = await response.text();
 
-            if (role === 'ADMIN') {
-                // Admin login returns a plain success/fail string
-                if (resultText.includes("successfully")) {
-                    window.location.href = "admin-dashboard.html";
+            if (resultText.includes("FIRST_LOGIN")) {
+                localStorage.setItem("userEmail", email);
+                window.location.href = "reset-password.html";
+                return;
+            } else if (resultText.includes("ACCOUNT_BLOCKED")) {
+                 Swal.fire({
+                    icon: 'error',
+                    title: 'Login Failed',
+                    text: "Your account is blocked. Please contact admin for assistance."
+                });
+                return;
+            } else if (resultText.trim().startsWith("{")) {
+                // SUCCESS: User (Driver/Passenger) Login
+                const user = JSON.parse(resultText);
+
+                // *** CRITICAL FIX: SAVE THE FULL USER OBJECT ***
+                localStorage.setItem("loggedInUser", JSON.stringify(user));
+
+                // --- ROLE-BASED REDIRECTION LOGIC ---
+                if (user.roleType === 'DRIVER') {
+                     window.location.href = "driver-dashboard.html";
+                } else if (user.roleType === 'PASSENGER') {
+                     window.location.href = "passenger-dashboard.html";
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Login Failed',
-                        text: "Invalid Admin credentials."
-                    });
+                     window.location.href = "user-home.html"; // Fallback for other roles
                 }
-            } else {
-                // User login returns "FIRST_LOGIN" or a JSON User object
-                if (resultText.includes("FIRST_LOGIN")) {
-                    localStorage.setItem("userEmail", email);
-                    window.location.href = "reset-password.html";
-                } else if (resultText.trim().startsWith("{")) {
-                    const user = JSON.parse(resultText);
-
-                    // *** CRITICAL FIX: SAVE THE FULL USER OBJECT ***
-                    localStorage.setItem("loggedInUser", JSON.stringify(user));
-
-                    // --- NEW ROLE-BASED REDIRECTION LOGIC ---
-                    if (user.roleType === 'DRIVER') {
-                         window.location.href = "driver-dashboard.html";
-                    } else if (user.roleType === 'PASSENGER') {
-                         window.location.href = "passenger-dashboard.html";
-                    } else {
-                         window.location.href = "user-home.html"; // Fallback for other roles
-                    }
-                    // ------------------------------------------
-                } else {
-                    // If it's another error message (e.g., "User not found!" or "Incorrect password!")
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Login Failed',
-                        text: "Invalid credentials. Please try again. Backend response: " + resultText
-                    });
-                }
+                return;
             }
+
+            // 2. If User Login Failed, Try Admin Login
+            fetchUrl = `${BASE_URL}/admin/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+            response = await fetch(fetchUrl, { method: "POST" });
+            resultText = await response.text();
+
+            if (resultText.includes("successfully")) {
+                // SUCCESS: Admin Login
+                // Note: For simplicity, Admin details aren't stored in localStorage,
+                // relying on the session/cookie (if set) or just redirecting.
+                window.location.href = "admin-dashboard.html";
+            } else {
+                // FAILURE: Both logins failed
+                 Swal.fire({
+                    icon: 'error',
+                    title: 'Login Failed',
+                    text: "Invalid credentials. Please try again."
+                });
+            }
+
         } catch (err) {
             console.error("Fetch error:", err);
             Swal.fire({

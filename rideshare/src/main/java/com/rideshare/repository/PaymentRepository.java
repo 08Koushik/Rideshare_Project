@@ -3,8 +3,10 @@ package com.rideshare.repository;
 import com.rideshare.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    // Custom methods can be added here later (e.g., findByPassengerId)
-    List<Payment> findByPassengerId(Long passengerId);
+
+    Page<Payment> findByPassengerId(Long passengerId, Pageable pageable);
 }

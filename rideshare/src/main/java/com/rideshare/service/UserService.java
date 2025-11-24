@@ -6,7 +6,7 @@ import com.rideshare.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // NEW IMPORT
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +22,7 @@ public class UserService {
     private EmailService emailService;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder; // NEW INJECTION: USED FOR LOGIN/RESET
+    private BCryptPasswordEncoder passwordEncoder;
 
 
     // Default Admin credentials
@@ -65,9 +65,21 @@ public class UserService {
         if (user.getRoleType() == RoleType.DRIVER) {
             user.setVehicleDetails(vehicle);
             user.setDriverLicenseNumber(driverLicenseNumber);
+
+            // NEW AUTO-VERIFICATION LOGIC
+            boolean hasRequiredDocs = (vehicle != null && !vehicle.isBlank()) &&
+                    (driverLicenseNumber != null && !driverLicenseNumber.isBlank());
+
+            user.setVerified(hasRequiredDocs);
+
         } else if (user.getRoleType() == RoleType.PASSENGER) {
             user.setAadharNumber(aadharNumber);
+            // MODIFIED: Passengers now require manual verification
+            user.setVerified(false);
+        } else if (user.getRoleType() == RoleType.ADMIN) {
+            user.setVerified(true);
         }
+
 
         User savedUser = userRepository.save(user);
 
@@ -93,11 +105,15 @@ public class UserService {
 
         User user = userOpt.get();
 
+        // NEW BLOCKING CHECK
+        if (user.isBlocked()) {
+            throw new RuntimeException("ACCOUNT_BLOCKED");
+        }
+
         // CRITICAL FIX: USE BCryptPasswordEncoder.matches() for validation
         if (!passwordEncoder.matches(password.trim(), user.getPassword().trim())) {
             throw new RuntimeException("Incorrect password!");
         }
-        // --------------------------------------------------------
 
         // 3. First Login -> throw special exception
         if (user.isFirstLogin()) {
@@ -120,6 +136,22 @@ public class UserService {
         user.setFirstLogin(false);
         userRepository.save(user);
         return "Password updated successfully!";
+    }
+
+    // NEW METHOD: Update User Status (Admin function)
+    public User updateUserStatus(Long userId, String type, boolean value) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        if ("verified".equalsIgnoreCase(type)) {
+            user.setVerified(value);
+        } else if ("blocked".equalsIgnoreCase(type)) {
+            user.setBlocked(value);
+        } else {
+            throw new IllegalArgumentException("Invalid status type: " + type);
+        }
+
+        return userRepository.save(user);
     }
 
     public List<User> getAllUsers() {

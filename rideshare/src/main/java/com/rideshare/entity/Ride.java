@@ -2,7 +2,7 @@ package com.rideshare.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Objects; // <-- NEW IMPORT
+import java.util.Objects;
 
 @Entity
 @Table(name = "rides")
@@ -21,11 +21,13 @@ public class Ride {
     private Double sourceLongitude;
     private Double destinationLatitude;
     private Double destinationLongitude;
-    private String pickupLocations; // Stores list of locations as a delimited string or JSON
-    private String dropLocations;   // Stores list of locations as a delimited string or JSON
+    private String pickupLocations;
+    private String dropLocations;
     private String vehicleName;
     private String vehicleType;
     private String vehicleImageReference;
+
+    private Boolean isAc; // NEW FIELD: AC status
 
     // ADDED: equals() and hashCode() based on ID
     @Override
@@ -76,4 +78,8 @@ public class Ride {
     public void setVehicleType(String vehicleType) { this.vehicleType = vehicleType; }
     public String getVehicleImageReference() { return vehicleImageReference; }
     public void setVehicleImageReference(String vehicleImageReference) { this.vehicleImageReference = vehicleImageReference; }
+
+    // NEW GETTERS/SETTERS
+    public Boolean getIsAc() { return isAc; }
+    public void setIsAc(Boolean isAc) { this.isAc = isAc; }
 }
