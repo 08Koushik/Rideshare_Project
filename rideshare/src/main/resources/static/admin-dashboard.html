@@ -1,165 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RideShare Admin - Dashboard</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideShare Admin - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        /*
+         * FIXED: Restored transparent black sidebar with blur and set appropriate font colors.
+         */
+
+        /* Apply the consistent blue abstract background to the body */
+        body {
+          background: url('images/blue_abstract_bg.png') no-repeat center center fixed !important;
+          background-size: cover !important;
+        }
+
+        /* 1. Make the main content wrapper transparent and blurred */
+        .dashboard-container {
+          flex-grow: 1;
+          margin: 0;
+          width: auto;
+          padding: 30px;
+          border-radius: 0;
+          box-shadow: none;
+          overflow-y: auto;
+          /* Apply Transparency and Blur */
+          background-color: rgba(255, 255, 255, 0.3) !important;
+          backdrop-filter: blur(5px) !important;
+          box-shadow: 0 5px 30px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* 2. Make the Sidebar transparent black/dark, blurred, and set text color to white */
+        #sidebar {
+          /* Black Transparent with blur */
+          background-color: rgba(0, 0, 0, 0.4) !important;
+          backdrop-filter: blur(5px) !important;
+          color: #fff !important; /* Set text to white/light */
+          box-shadow: 2px 0 10px rgba(0,0,0,0.3) !important;
+        }
+
+        /* Adjust Sidebar contents' colors for contrast */
+        #sidebar h3 {
+            color: #4facfe !important; /* Title remains bright blue */
+        }
+        #sidebar #navDashboard {
+            color: #4facfe !important; /* Active link remains bright blue */
+        }
+        /* Inactive links and footer text must be white for contrast with dark sidebar */
+        #navUsers, #navSettings {
+            color: #fff !important;
+        }
+        #sidebar > div:last-child {
+            color: #fff !important;
+        }
+
+        /* 3. Make the Filter Row transparent and blurred */
+        #filter-sort-row {
+          /* Apply Transparency and Blur */
+          background-color: rgba(255, 255, 255, 0.2) !important;
+          backdrop-filter: blur(3px) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* 4. Make Inner Chart/Report Cards transparent and blurred */
+        .chart-wrapper > div {
+          /* Apply Transparency and Blur */
+          background-color: rgba(255, 255, 255, 0.5) !important;
+          backdrop-filter: blur(3px) !important;
+          border: 1px solid #eee !important;
+        }
+
+        /* Adjust visibility for elements inside transparent containers */
+        #filter-sort-row input, #filter-sort-row select {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        #filter-sort-row span {
+            color: #fff !important; /* Total users count in filter row needs to be white now */
+        }
+        #user-stats > div {
+          /* Keep the stat cards slightly opaque to preserve the gradient visual */
+          opacity: 0.9;
+        }
+        .chart-wrapper #overview-report-card .info-item strong {
+            color: #4facfe; /* Ensure color scheme coherence */
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; background: url('images/blue_abstract_bg.png') no-repeat center center fixed; background-size: cover;">
+<body style="margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden;">
 
 <div class="back-nav" style="display: none;"></div>
 
-<div id="sidebar" style="width: 250px; background-color: #27293d; padding: 20px 0; color: #fff; display: flex; flex-direction: column; height: 100%; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">
-  <h3 style="margin: 0 20px 30px; font-weight: bold; color: #4facfe;">RideShare Admin</h3>
+<div id="sidebar" style="width: 250px; padding: 20px 0; display: flex; flex-direction: column; height: 100%;">
+    <h3 style="margin: 0 20px 30px; font-weight: bold; color: #4facfe;">RideShare Admin</h3>
 
-  <div id="navDashboard" style="padding: 10px 20px; font-size: 1.1rem; color: #4facfe; cursor: pointer;">
-    <i class="fas fa-chart-line" style="margin-right: 10px;"></i> Dashboard
-  </div>
+    <div id="navDashboard" style="padding: 10px 20px; font-size: 1.1rem; color: #4facfe; cursor: pointer;">
+        <i class="fas fa-chart-line" style="margin-right: 10px;"></i> Dashboard
+    </div>
 
-  <div id="navUsers" style="padding: 10px 20px; font-size: 1.1rem; opacity: 0.7; cursor: pointer;">
-    <i class="fas fa-users" style="margin-right: 10px;"></i> Users
-  </div>
+    <div id="navUsers" style="padding: 10px 20px; font-size: 1.1rem; opacity: 0.9; cursor: pointer;">
+        <i class="fas fa-users" style="margin-right: 10px;"></i> Users
+    </div>
 
-  <div id="navSettings" style="padding: 10px 20px; font-size: 1.1rem; opacity: 0.7; cursor: pointer;">
-    <i class="fas fa-cog" style="margin-right: 10px;"></i> Settings
-  </div>
+    <div id="navSettings" style="padding: 10px 20px; font-size: 1.1rem; opacity: 0.9; cursor: pointer;">
+        <i class="fas fa-cog" style="margin-right: 10px;"></i> Settings
+    </div>
 
-  <div style="padding: 20px; margin-top: auto; color: #fff; opacity: 0.8; text-align: center; font-size: 0.9rem;">
-    User Distribution
-  </div>
+    <div style="padding: 20px; margin-top: auto; color: #fff; opacity: 0.8; text-align: center; font-size: 0.9rem;">
+        User Distribution
+    </div>
 </div>
 
-<div class="dashboard-container" style="flex-grow: 1; margin: 0; width: auto; padding: 30px; border-radius: 0; box-shadow: none; background-color: #ffffff; overflow-y: auto;">
+<div class="dashboard-container">
 
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
-    <h2 style="font-size: 1.8rem; margin: 0; border-bottom: none; color: #4facfe;">Dashboard</h2>
-    <div style="display: flex; gap: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
+        <h2 style="font-size: 1.8rem; margin: 0; border-bottom: none; color: #4facfe;">Dashboard</h2>
+        <div style="display: flex; gap: 10px;">
 
-      <button id="monitorDataBtn" style="background-color: #3f51b5; color: white; padding: 10px 20px; font-weight: bold;">
-        <i class="fas fa-eye"></i> Monitor All Data
-      </button>
+            <button id="monitorDataBtn" style="background-color: #3f51b5; color: white; padding: 10px 20px; font-weight: bold;">
+                <i class="fas fa-eye"></i> Monitor All Data
+            </button>
 
-      <button onclick="loadUsers()" style="background-color: #f0f0f0; color: #4facfe; border: 1px solid #ccc; box-shadow: none; padding: 10px 20px; font-weight: bold;">
-        <i class="fas fa-sync-alt"></i> Refresh
-      </button>
+            <button onclick="loadUsers()" style="background-color: #f0f0f0; color: #4facfe; border: 1px solid #ccc; box-shadow: none; padding: 10px 20px; font-weight: bold;">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
 
-      <button id="onboardBtn" onclick="window.location.href='admin-onboard-user.html'" style="padding: 10px 20px; font-weight: bold;">
-        <i class="fa-solid fa-user-plus"></i> Create user
-      </button>
+            <button id="onboardBtn" onclick="window.location.href='admin-onboard-user.html'" style="padding: 10px 20px; font-weight: bold;">
+                <i class="fa-solid fa-user-plus"></i> Create user
+            </button>
 
-      <button id="deleteAllUsersBtn" style="background-color: #ff6b6b; color: white; padding: 10px 20px; font-weight: bold;">
-        Delete All Users
-      </button>
+            <button id="deleteAllUsersBtn" style="background-color: #ff6b6b; color: white; padding: 10px 20px; font-weight: bold;">
+                Delete All Users
+            </button>
 
-      <button id="logoutAdminBtn" style="background-color: #ff6b6b; color: white; padding: 10px 20px; font-weight: bold;">
-        Logout
-      </button>
-    </div>
-  </div>
-
-  <div id="filter-sort-row" style="display: flex; gap: 15px; align-items: center; margin-bottom: 30px; padding: 10px; background-color: #f7f9fc; border-radius: 8px;">
-
-    <input type="text" id="searchUserInput" placeholder="Search by name or email..." style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 300px;">
-
-    <select id="roleFilter" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
-      <option value="">All roles</option>
-      <option value="ADMIN">ADMIN</option>
-      <option value="DRIVER">DRIVER</option>
-      <option value="PASSENGER">PASSENGER</option>
-    </select>
-
-    <select id="sortSelect" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
-      <option value="recent">Sort: Recent</option>
-      <option value="name">Sort: Name</option>
-    </select>
-
-    <span style="font-weight: bold; color: #333; margin-left: auto;">Total users: <span id="totalUsersCountDisplay">0</span></span>
-  </div>
-
-  <div id="user-stats" style="display: flex; flex-wrap: wrap; gap: 20px; text-align: center; margin-bottom: 50px;">
-
-    <div style="background: linear-gradient(135deg, #a77dff, #6f54ff); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
-      <h4 style="margin: 0; font-size: 1rem;">US</h4>
-      <p id="usBadgeCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
-      <p style="font-size: 0.8rem; margin: 0;">Total users</p>
+            <button id="logoutAdminBtn" style="background-color: #ff6b6b; color: white; padding: 10px 20px; font-weight: bold;">
+                Logout
+            </button>
+        </div>
     </div>
 
-    <div style="background: linear-gradient(135deg, #43e97b, #38c76c); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
-      <h4 style="margin: 0; font-size: 1rem;">DR</h4>
-      <p id="driverCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
-      <p style="font-size: 0.8rem; margin: 0;">Drivers</p>
+    <div id="filter-sort-row" style="display: flex; gap: 15px; align-items: center; margin-bottom: 30px; padding: 10px; border-radius: 8px;">
+
+        <input type="text" id="searchUserInput" placeholder="Search by name or email..." style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 300px;">
+
+        <select id="roleFilter" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+            <option value="">All roles</option>
+            <option value="ADMIN">ADMIN</option>
+            <option value="DRIVER">DRIVER</option>
+            <option value="PASSENGER">PASSENGER</option>
+        </select>
+
+        <select id="sortSelect" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+            <option value="recent">Sort: Recent</option>
+            <option value="name">Sort: Name</option>
+        </select>
+
+        <span style="font-weight: bold; margin-left: auto;">Total users: <span id="totalUsersCountDisplay">0</span></span>
     </div>
 
-    <div style="background: linear-gradient(135deg, #f76b1c, #f48037); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
-      <h4 style="margin: 0; font-size: 1rem;">PS</h4>
-      <p id="passengerCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
-      <p style="font-size: 0.8rem; margin: 0;">Passengers</p>
-    </div>
+    <div id="user-stats" style="display: flex; flex-wrap: wrap; gap: 20px; text-align: center; margin-bottom: 50px;">
 
-    <div style="background: linear-gradient(135deg, #ff9b6b, #f76b1c); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
-      <h4 style="margin: 0; font-size: 1rem;">Rides</h4>
-      <p id="totalRidesCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
-      <p style="font-size: 0.8rem; margin: 0;">Total Posted</p>
-    </div>
-
-    <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
-      <h4 style="margin: 0; font-size: 1rem;">Earnings</h4>
-      <p id="totalEarnings" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
-      <p style="font-size: 0.8rem; margin: 0;">Total Paid</p>
-    </div>
-
-    <div style="background: linear-gradient(135deg, #a77dff, #6f54ff); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
-      <h4 style="margin: 0; font-size: 1rem;">BKS</h4>
-      <p id="totalBookingsCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
-      <p style="font-size: 0.8rem; margin: 0;">Total Bookings</p>
-    </div>
-
-  </div>
-
-  <h3 style="color: #4facfe; margin-bottom: 20px;">Dashboard Analytics</h3>
-
-  <div class="chart-wrapper" style="display: flex; gap: 30px; margin-bottom: 50px;">
-    <div style="flex: 1; min-width: 45%; max-width: 50%; background-color: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
-      <h3 style="text-align: center; color: #4facfe; margin-top: 5px;">Primary Metrics Distribution</h3>
-      <div style="height: 300px; width: 100%; margin: 10px auto;">
-        <canvas id="userRoleChart"></canvas>
-      </div>
-    </div>
-
-    <div id="overview-report-card" style="flex: 1; min-width: 45%; max-width: 50%; background-color: #fff; padding: 25px; border: 1px solid #ccc; border-radius: 8px;">
-      <h3 style="color: #4facfe; margin-top: 0; margin-bottom: 20px;">Overview - Interactive Snapshot</h3>
-
-      <div style="display: flex; gap: 40px;">
-        <div style="flex: 1;">
-          <p style="font-size: 1.1rem; font-weight: 500; color: #555; margin-bottom: 5px; text-align: left;">Total Earnings</p>
-          <div style="font-size: 3rem; font-weight: bold; color: #43e97b; margin-bottom: 10px;" id="overview-earnings-value">₹0.00</div>
-          <span style="color: #43e97b; font-weight: bold;">+0.00%</span>
+        <div style="background: linear-gradient(135deg, #a77dff, #6f54ff); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+            <h4 style="margin: 0; font-size: 1rem;">US</h4>
+            <p id="usBadgeCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+            <p style="font-size: 0.8rem; margin: 0;">Total users</p>
         </div>
 
-        <div style="flex: 1; border-left: 1px solid #eee; padding-left: 20px;">
-          <p style="font-weight: bold; margin-bottom: 10px; color: #333;">To Do List</p>
-          <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.9em; color: #777;">
-            <li style="margin-bottom: 5px;">Review pending driver documents</li>
-            <li style="margin-bottom: 5px;">Export bookings report</li>
-            <li style="margin-bottom: 5px;">Audit suspicious accounts</li>
-          </ul>
+        <div style="background: linear-gradient(135deg, #43e97b, #38c76c); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+            <h4 style="margin: 0; font-size: 1rem;">DR</h4>
+            <p id="driverCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+            <p style="font-size: 0.8rem; margin: 0;">Drivers</p>
         </div>
-      </div>
+
+        <div style="background: linear-gradient(135deg, #f76b1c, #f48037); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+            <h4 style="margin: 0; font-size: 1rem;">PS</h4>
+            <p id="passengerCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+            <p style="font-size: 0.8rem; margin: 0;">Passengers</p>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #ff9b6b, #f76b1c); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+            <h4 style="margin: 0; font-size: 1rem;">Rides</h4>
+            <p id="totalRidesCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+            <p style="font-size: 0.8rem; margin: 0;">Total Posted</p>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+            <h4 style="margin: 0; font-size: 1rem;">Earnings</h4>
+            <p id="totalEarnings" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+            <p style="font-size: 0.8rem; margin: 0;">Total Paid</p>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #a77dff, #6f54ff); color: white; padding: 15px; border-radius: 8px; flex-grow: 1; max-width: 150px; min-height: 80px;">
+            <h4 style="margin: 0; font-size: 1rem;">BKS</h4>
+            <p id="totalBookingsCount" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0 0;"></p>
+            <p style="font-size: 0.8rem; margin: 0;">Total Bookings</p>
+        </div>
+
     </div>
-  </div>
+
+    <h3 style="color: #4facfe; margin-bottom: 20px;">Dashboard Analytics</h3>
+
+    <div class="chart-wrapper" style="display: flex; gap: 30px; margin-bottom: 50px;">
+        <div style="flex: 1; min-width: 45%; max-width: 50%; padding: 10px; border-radius: 8px;">
+            <h3 style="text-align: center; color: #4facfe; margin-top: 5px;">Primary Metrics Distribution</h3>
+            <div style="height: 300px; width: 100%; margin: 10px auto;">
+                <canvas id="userRoleChart"></canvas>
+            </div>
+        </div>
+
+        <div id="overview-report-card" style="flex: 1; min-width: 45%; max-width: 50%; padding: 25px; border-radius: 8px;">
+            <h3 style="color: #4facfe; margin-top: 0; margin-bottom: 20px;">Overview - Interactive Snapshot</h3>
+
+            <div style="display: flex; gap: 40px;">
+                <div style="flex: 1;">
+                    <p style="font-size: 1.1rem; font-weight: 500; color: #555; margin-bottom: 5px; text-align: left;">Total Earnings</p>
+                    <div style="font-size: 3rem; font-weight: bold; color: #43e97b; margin-bottom: 10px;" id="overview-earnings-value">₹0.00</div>
+                    <span style="color: #43e97b; font-weight: bold;">+0.00%</span>
+                </div>
+
+                <div style="flex: 1; border-left: 1px solid #eee; padding-left: 20px;">
+                    <p style="font-weight: bold; margin-bottom: 10px; color: #333;">To Do List</p>
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.9em; color: #777;">
+                        <li style="margin-bottom: 5px;">Review pending driver documents</li>
+                        <li style="margin-bottom: 5px;">Export bookings report</li>
+                        <li style="margin-bottom: 5px;">Audit suspicious accounts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
-  <script>
-    // Define BASE_URL here to guarantee it's available before admin-dashboard.js loads
-    const BASE_URL = "http://localhost:8080/api/auth";
-  </script>
-  <script src="js/common.js"></script>
-  <script src="js/admin-dashboard.js"></script>
+    <script>
+        // Define BASE_URL here to guarantee it's available before admin-dashboard.js loads
+        const BASE_URL = "http://localhost:8080/api/auth";
+    </script>
+    <script src="js/common.js"></script>
+    <script src="js/admin-dashboard.js"></script>
 
 </body>
 </html>

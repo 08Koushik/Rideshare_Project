@@ -3,6 +3,8 @@ package com.rideshare.dto;
 public class ClientSecretResponse {
     private String clientSecret;
 
+    public ClientSecretResponse() { }
+
     public ClientSecretResponse(String clientSecret) {
         this.clientSecret = clientSecret;
     }

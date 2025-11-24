@@ -9,11 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,46 +21,61 @@ public class RideSearchService {
     @Autowired
     private UserRepository userRepository;
 
+    // 🔍 NEW FLEXIBLE SEARCH – matches long LocationIQ addresses
     public List<RideDetailsResponse> searchRides(String source, String destination, String date) {
+
         LocalDate searchDate = LocalDate.parse(date);
 
-        // 1. Find all matching Ride entities (using original logic)
-        List<Ride> directMatches = rideRepository.findRidesBySourceDestinationAndDate(source, destination, searchDate);
-        List<Ride> partialMatches = rideRepository.findPartialRidesBySourceOrDestination(source, destination, searchDate);
+        // 1️⃣ Fetch rides using flexible matching
+        List<Ride> matchedRides = rideRepository.searchRidesFlexible(
+                source.trim(),
+                destination.trim(),
+                searchDate
+        );
 
-        Set<Ride> allRides = new HashSet<>(directMatches);
-        allRides.addAll(partialMatches);
-
-        if (allRides.isEmpty()) {
+        if (matchedRides.isEmpty()) {
             return List.of();
         }
 
-        // 2. Collect all unique Driver IDs
-        Set<Long> driverIds = allRides.stream()
+        // 2️⃣ Extract driver IDs
+        Set<Long> driverIds = matchedRides.stream()
                 .map(Ride::getDriverId)
                 .collect(Collectors.toSet());
 
-        // 3. Fetch all necessary Driver (User) details in one go (Efficient)
+        // 3️⃣ Fetch driver details (batch lookup)
         List<User> drivers = userRepository.findAllById(driverIds);
 
-        // 4. Map the fetched Rides to the new DTO, incorporating driver details
-        return allRides.stream().map(ride -> {
+        // 4️⃣ Convert to DTO
+        return matchedRides.stream().map(ride -> {
+
             User driver = drivers.stream()
                     .filter(d -> d.getId().equals(ride.getDriverId()))
                     .findFirst()
-                    .orElse(null); // Should not happen if data is consistent
+                    .orElse(null);
 
-            if (driver == null) {
-                // Skip or handle corrupted data
-                return null;
-            }
-            List<String> imageReferences = new ArrayList<>();
-            String refString = ride.getVehicleImageReference();
-            if (refString != null && !refString.isEmpty()) {
-                imageReferences = Arrays.asList(refString.split(";"));
+            if (driver == null) return null;
+
+            List<String> images = new ArrayList<>();
+            if (ride.getVehicleImageReference() != null) {
+                images = Arrays.asList(ride.getVehicleImageReference().split(";"));
             }
 
-            return new RideDetailsResponse(ride, driver,imageReferences);
-        }).filter(r -> r != null).collect(Collectors.toList());
+            return new RideDetailsResponse(ride, driver, images);
+
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    // Helper to map a single ride — used by RideController
+    public RideDetailsResponse mapToRideDetails(Ride ride) {
+
+        User driver = userRepository.findById(ride.getDriverId()).orElse(null);
+        if (driver == null) return null;
+
+        List<String> images = new ArrayList<>();
+        if (ride.getVehicleImageReference() != null) {
+            images = Arrays.asList(ride.getVehicleImageReference().split(";"));
+        }
+
+        return new RideDetailsResponse(ride, driver, images);
     }
 }

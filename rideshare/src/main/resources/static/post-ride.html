@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,105 +7,109 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         body {
-          background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
-          background-size: cover;
-          margin: 0;
-          padding: 0;
-          font-family: 'Poppins', sans-serif;
+            background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
         }
-        /* Style for multi-step form navigation buttons */
+
+        .hidden {
+            display: none !important;
+        }
+
         .navigation-buttons {
             display: flex;
             justify-content: space-between;
             gap: 10px;
             margin-top: 20px;
         }
+
         .navigation-buttons button {
             width: 48%;
-            padding: 10px;
-        }
-        .hidden {
-            display: none !important;
         }
     </style>
 </head>
+
 <body>
-<div class="back-nav"><a href="javascript:history.back()">&leftarrow; Back</a></div>
+
+<div class="back-nav">
+    <a href="javascript:history.back()">&leftarrow; Back</a>
+</div>
 
 <div class="form-container">
     <h2>Post a Ride (Step <span id="currentStep">1</span> of 3)</h2>
-    <form id="postRideForm">
 
+    <form id="postRideForm" enctype="multipart/form-data">
+
+        <!-- STEP 1 -->
         <div id="step1" class="form-step">
-            <label for="source">Source</label>
-            <input type="text" id="source" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)" required>
+            <label>Source</label>
+            <input type="text" id="source" name="source" list="location-suggestions" required onkeyup="fetchLocationSuggestions(this)">
 
-            <label for="destination">Destination</label>
-            <input type="text" id="destination" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)" required>
+            <label>Destination</label>
+            <input type="text" id="destination" name="destination" list="location-suggestions" required onkeyup="fetchLocationSuggestions(this)">
 
-            <label for="date">Date</label>
-            <input type="date" id="date" required>
+            <label>Date</label>
+            <input type="date" id="date" name="date" required>
 
-            <label for="time">Time</label>
-            <input type="time" id="time" required>
+            <label>Time</label>
+            <input type="time" id="time" name="time" required>
 
-            <label for="seats">Available Seats</label>
-            <input type="number" id="seats" min="1" max="4" required>
+            <label>Available Seats</label>
+            <input type="number" id="seats" name="seats" min="1" max="4" required>
 
             <input type="hidden" id="vehicle" name="vehicle">
             <input type="hidden" id="license" name="license">
 
             <div class="navigation-buttons">
-                <button type="button" onclick="nextStep()">Next (Step 2)</button>
+                <button type="button" onclick="nextStep()">Next →</button>
             </div>
         </div>
 
+        <!-- STEP 2 -->
         <div id="step2" class="form-step hidden">
-            <h3>Pickup Locations (Optional, Max 4)</h3>
-            <label for="pickup1">Pickup 1</label>
-            <input type="text" id="pickup1" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
-            <label for="pickup2">Pickup 2</label>
-            <input type="text" id="pickup2" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
-            <label for="pickup3">Pickup 3</label>
-            <input type="text" id="pickup3" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
-            <label for="pickup4">Pickup 4</label>
-            <input type="text" id="pickup4" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+            <h3>Pickup Locations (Optional)</h3>
 
-            <h3>Drop Locations (Optional, Max 4)</h3>
-            <label for="drop1">Drop 1</label>
-            <input type="text" id="drop1" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
-            <label for="drop2">Drop 2</label>
-            <input type="text" id="drop2" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
-            <label for="drop3">Drop 3</label>
-            <input type="text" id="drop3" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
-            <label for="drop4">Drop 4</label>
-            <input type="text" id="drop4" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+            <input type="text" id="pickup1" name="pickup1" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+            <input type="text" id="pickup2" name="pickup2" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+            <input type="text" id="pickup3" name="pickup3" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+            <input type="text" id="pickup4" name="pickup4" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+
+            <h3>Drop Locations (Optional)</h3>
+
+            <input type="text" id="drop1" name="drop1" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+            <input type="text" id="drop2" name="drop2" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+            <input type="text" id="drop3" name="drop3" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
+            <input type="text" id="drop4" name="drop4" list="location-suggestions" onkeyup="fetchLocationSuggestions(this)">
 
             <div class="navigation-buttons">
-                <button type="button" onclick="prevStep()">Back (Step 1)</button>
-                <button type="button" onclick="nextStep()">Next (Step 3)</button>
+                <button type="button" onclick="prevStep()">← Back</button>
+                <button type="button" onclick="nextStep()">Next →</button>
             </div>
         </div>
 
+        <!-- STEP 3 -->
         <div id="step3" class="form-step hidden">
-            <label for="vehicleName">Vehicle Name</label>
-            <input type="text" id="vehicleName" required>
+            <label>Vehicle Name</label>
+            <input type="text" id="vehicleName" name="vehicleName" required>
 
-            <label for="vehicleType">Vehicle Type</label>
-            <select id="vehicleType" required>
-                <option value="">Select Vehicle Type</option>
+            <label>Vehicle Type</label>
+            <select id="vehicleType" name="vehicleType" required>
+                <option value="">Select type</option>
                 <option value="CAR">Car</option>
                 <option value="BIKE">Bike</option>
                 <option value="VAN">Van</option>
             </select>
 
-            <label for="vehicleImage">Vehicle Image</label>
-            <input type="file" id="vehicleImage" accept="image/*" multiple>
+            <label>Vehicle Images</label>
+            <input type="file" id="vehicleImage" name="vehicleImages" accept="image/*" multiple>
 
             <div class="navigation-buttons">
-                <button type="button" onclick="prevStep()">Back (Step 2)</button>
+                <button type="button" onclick="prevStep()">← Back</button>
                 <button type="submit">Post Ride</button>
             </div>
         </div>
@@ -116,178 +120,152 @@
 <datalist id="location-suggestions"></datalist>
 
 <script src="js/common.js"></script>
-<script src="js/common.js"></script>
+
 <script>
-    // Global state for multi-step form
+    /* -----------------------
+       STEP LOGIC FIXED
+    ------------------------*/
     let currentStep = 1;
     const totalSteps = 3;
-    const formSteps = [
-        document.getElementById('step1'),
-        document.getElementById('step2'),
-        document.getElementById('step3')
-    ];
-    const stepTitle = document.getElementById('currentStep');
-    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser")); // Retrieved from user-home.html logic
+    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
 
     function updateStepVisibility() {
-        formSteps.forEach((step, index) => {
-            step.classList.toggle('hidden', index + 1 !== currentStep);
-        });
-        stepTitle.textContent = currentStep;
-    }
+        document.querySelectorAll(".form-step").forEach((step, index) => {
+            const visible = index + 1 === currentStep;
+            step.classList.toggle("hidden", !visible);
 
-    function validateStep(step) {
-        let isValid = true;
-        const inputs = formSteps[step - 1].querySelectorAll('[required]');
-        inputs.forEach(input => {
-            // Note: input type="file" is not required in Step 3
-            if (input.type !== 'file' && !input.value) {
-                input.reportValidity(); // Show native browser validation error
-                isValid = false;
-            }
+            // disable required inputs in hidden steps
+            step.querySelectorAll("[required]").forEach(input => {
+                input.disabled = !visible;
+            });
         });
-        return isValid;
+
+        document.getElementById("currentStep").innerText = currentStep;
     }
 
     function nextStep() {
         if (validateStep(currentStep)) {
-            if (currentStep < totalSteps) {
-                currentStep++;
-                updateStepVisibility();
-            }
-        }
-    }
-
-    function prevStep() {
-        if (currentStep > 1) {
-            currentStep--;
+            currentStep++;
             updateStepVisibility();
         }
     }
 
-    // Initialize step visibility
-    document.addEventListener('DOMContentLoaded', () => {
+    function prevStep() {
+        currentStep--;
+        updateStepVisibility();
+    }
+
+    function validateStep(step) {
+        const inputs = document.querySelectorAll(`#step${step} [required]:not([disabled])`);
+        for (let input of inputs) {
+            if (!input.value) {
+                input.reportValidity();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
         updateStepVisibility();
 
-        if (!loggedInUser || loggedInUser.roleType !== 'DRIVER') {
-            Swal.fire('Access Denied', 'Only drivers can post rides.', 'error').then(() => {
-                window.location.href = 'user-login.html';
-            });
+        if (!loggedInUser || loggedInUser.roleType !== "DRIVER") {
+            Swal.fire("Access Denied", "Only drivers can post rides.", "error")
+                .then(() => location.href = "user-login.html");
             return;
         }
 
-        // Auto-fill hidden fields from loggedInUser object
-        document.getElementById('vehicle').value = loggedInUser.vehicleDetails || '';
-        document.getElementById('license').value = loggedInUser.driverLicenseNumber || '';
+        document.getElementById("vehicle").value = loggedInUser.vehicleDetails || "";
+        document.getElementById("license").value = loggedInUser.driverLicenseNumber || "";
     });
 
-    // 1. LocationIQ Autocomplete Logic (from original file)
-    const LOCATIONIQ_API_KEY = 'pk.8c6dc49f1003f5c138f99ed064ad5a43';
-
+    /* -----------------------
+       LOCATIONIQ AUTOCOMPLETE
+    ------------------------*/
+    const LOCATIONIQ_API_KEY = "pk.a255f03860b88af0a3d4097bf6e4a442";
     let debounceTimer;
-    function fetchLocationSuggestions(inputElement) {
+
+    function fetchLocationSuggestions(input) {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(async () => {
-            const query = inputElement.value.trim();
-            if (query.length < 3) return;
+            if (input.value.length < 3) return;
 
-            const datalist = document.getElementById('location-suggestions');
-            const url = `https://api.locationiq.com/v1/autocomplete?key=${LOCATIONIQ_API_KEY}&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`;
+            const url =
+                `https://api.locationiq.com/v1/autocomplete?key=${LOCATIONIQ_API_KEY}&q=${encodeURIComponent(input.value)}&limit=5&countrycodes=in`;
 
             try {
-                const response = await fetch(url);
-                const data = await response.json();
-                datalist.innerHTML = '';
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const list = document.getElementById("location-suggestions");
+                list.innerHTML = "";
 
                 if (Array.isArray(data)) {
                     data.forEach(item => {
-                        const option = document.createElement('option');
+                        let option = document.createElement("option");
                         option.value = item.display_name;
-                        datalist.appendChild(option);
+                        list.appendChild(option);
                     });
                 }
-            } catch (error) {
-                console.error("LocationIQ Autocomplete Error:", error);
+            } catch (err) {
+                console.error("Location Autocomplete Error:", err);
             }
         }, 300);
     }
 
-    // 2. Form Submission Logic (on Step 3 submit)
-    document.getElementById('postRideForm').addEventListener('submit', async function(e) {
+    /* -----------------------
+       SUBMIT FORM
+    ------------------------*/
+    document.getElementById("postRideForm").addEventListener("submit", async e => {
         e.preventDefault();
 
-        if (!loggedInUser || loggedInUser.roleType !== 'DRIVER') return;
-        if (!validateStep(currentStep)) return;
+        // re-enable disabled inputs so they are included in FormData
+        document.querySelectorAll("[disabled]").forEach(i => i.disabled = false);
 
-        // Collect optional pickup/drop locations into a delimited string
-        const getLocations = (prefix) => {
-            const locations = [];
-            for (let i = 1; i <= 4; i++) {
-                const loc = document.getElementById(prefix + i).value.trim();
-                if (loc) locations.push(loc);
-            }
-            return locations.join(';'); // Use semicolon as delimiter
-        };
+        const collect = prefix =>
+            [1,2,3,4]
+                .map(i => document.getElementById(prefix + i).value.trim())
+                .filter(x => x)
+                .join(";");
 
-        // --- 1. COLLECT DATA ---
         const rideData = {
-            // Step 1 Fields
-            source: document.getElementById('source').value,
-            destination: document.getElementById('destination').value,
-            dateTime: document.getElementById('date').value + 'T' + document.getElementById('time').value + ':00',
-            availableSeats: parseInt(document.getElementById('seats').value),
+            source: source.value,
+            destination: destination.value,
+            dateTime: `${date.value}T${time.value}:00`,
+            availableSeats: parseInt(seats.value),
             driverId: loggedInUser.id,
-
-            // Step 2 Fields
-            pickupLocations: getLocations('pickup'),
-            dropLocations: getLocations('drop'),
-
-            // Step 3 Fields
-            vehicleName: document.getElementById('vehicleName').value,
-            vehicleType: document.getElementById('vehicleType').value,
-            // vehicleImageReference is now handled by the server
+            pickupLocations: collect("pickup"),
+            dropLocations: collect("drop"),
+            vehicleName: vehicleName.value,
+            vehicleType: vehicleType.value
         };
 
-        const fileInput = document.getElementById('vehicleImage');
-
-        // --- 2. CREATE MULTIPART FORM DATA ---
         const formData = new FormData();
+        formData.append("rideData", new Blob([JSON.stringify(rideData)], { type: "application/json" }));
 
-        // Append JSON data as a Blob part named 'rideData'
-        formData.append('rideData', new Blob([JSON.stringify(rideData)], {
-            type: 'application/json'
-        }));
-
-       if (fileInput.files.length > 0) {
-            for (let i = 0; i < fileInput.files.length; i++) {
-                // Key matches the controller's @RequestPart name
-                formData.append('vehicleImages', fileInput.files[i]);
-            }
+        const files = vehicleImage.files;
+        for (let file of files) {
+            formData.append("vehicleImages", file);
         }
 
-        // --- 3. SEND REQUEST WITH FormData (CRITICAL FIX) ---
         try {
-            const result = await fetch(`http://localhost:8080/api/rides/post`, {
-                method: 'POST',
-                // IMPORTANT: DO NOT set Content-Type header when using FormData
+            const res = await fetch("http://localhost:8080/api/rides/post", {
+                method: "POST",
                 body: formData
             });
 
-            if (result.ok) {
-                Swal.fire('Success!', 'Ride posted successfully!', 'success').then(() => {
-                    window.location.href = 'driver-dashboard.html';
-                });
+            if (res.ok) {
+                Swal.fire("Success!", "Ride posted successfully!", "success")
+                    .then(() => location.href = "driver-dashboard.html");
             } else {
-                const errorText = await result.text();
-                Swal.fire('Posting Failed', errorText || 'Server error during posting. Check console.', 'error');
+                Swal.fire("Posting Failed", await res.text(), "error");
             }
         } catch (error) {
-            console.error("Fetch Error:", error);
-            Swal.fire('Connection Error', 'Could not connect to the server. Ensure backend is running.', 'error');
+            Swal.fire("Server Error", "Could not connect to backend.", "error");
+            console.error(error);
         }
     });
 </script>
-</body>
-</html>
+
 </body>
 </html>

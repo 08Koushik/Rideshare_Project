@@ -3,24 +3,38 @@ package com.rideshare.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "users_unique_email", columnNames = "email")
+        }
+)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false, unique = true, length = 191)
     private String email;
+
+    @Column(nullable = false)
     private String contactNumber;
+
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private RoleType roleType;  // <-- New field
+    @Column(nullable = false, length = 20)
+    private RoleType roleType;  // ADMIN / DRIVER / PASSENGER
 
-    private boolean isFirstLogin;
+    @Column(nullable = false)
+    private boolean isFirstLogin = true;
+
     private String vehicleDetails;
-
     private String driverLicenseNumber;
     private String aadharNumber;
 

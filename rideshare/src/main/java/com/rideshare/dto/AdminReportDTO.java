@@ -7,10 +7,6 @@ public class AdminReportDTO {
     private long totalBookings;
     private long totalPayments;
 
-
-    public AdminReportDTO() {}
-
-    // Getters and Setters
     public long getTotalRides() { return totalRides; }
     public void setTotalRides(long totalRides) { this.totalRides = totalRides; }
 

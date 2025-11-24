@@ -1,92 +1,109 @@
-// src/main/resources/static/js/user.js
-
-// BASE URL for backend API
+// ================================
+// ✅ BASE URL
+// ================================
 const BASE_URL = "http://localhost:8080/api/auth";
 
-// =================== UNIFIED LOGIN ===================
+
+// ================================
+// ✅ LOGIN HANDLER
+// ================================
 const userLoginForm = document.getElementById("userLoginForm");
+
 if (userLoginForm) {
+
     userLoginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        // --- CLEAN RETRIEVAL ---
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const role = document.getElementById("role").value; // NEW: Get selected role
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const role = document.getElementById("role").value;
 
-        // Check for empty values immediately
         if (!email || !password || !role) {
             Swal.fire({
-                            icon: 'warning',
-                            title: 'Required Fields',
-                            text: "Please enter both email and password, and select a login role."
-                        });
+                icon: "warning",
+                title: "Missing Fields",
+                text: "Please enter email, password, and select login type."
+            });
             return;
         }
 
-        let fetchUrl;
+        let url;
 
-        if (role === 'ADMIN') {
-            // Admin Login Endpoint (Admin controller expects query params)
-            fetchUrl = `${BASE_URL}/admin/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-        } else {
-            // User Login Endpoint (User controller expects query params)
-            fetchUrl = `${BASE_URL}/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+        // ✅ Admin login (string response)
+        if (role === "ADMIN") {
+            url = `${BASE_URL}/admin/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+        }
+        // ✅ Driver OR Passenger login
+        else {
+            url = `${BASE_URL}/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
         }
 
-        console.log("Attempting to fetch URL:", fetchUrl);
-
         try {
-            const response = await fetch(fetchUrl, { method: "POST" });
-            const resultText = await response.text();
+            const response = await fetch(url, { method: "POST" });
+            const text = await response.text();
 
-            if (role === 'ADMIN') {
-                // Admin login returns a plain success/fail string
-                if (resultText.includes("successfully")) {
+            // ✅ ADMIN LOGIN
+            if (role === "ADMIN") {
+                if (text.includes("successfully")) {
                     window.location.href = "admin-dashboard.html";
                 } else {
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Login Failed',
-                        text: "Invalid Admin credentials."
+                        icon: "error",
+                        title: "Login Failed",
+                        text: "Invalid Admin Credentials."
                     });
                 }
-            } else {
-                // User login returns "FIRST_LOGIN" or a JSON User object
-                if (resultText.includes("FIRST_LOGIN")) {
-                    localStorage.setItem("userEmail", email);
-                    window.location.href = "reset-password.html";
-                } else if (resultText.trim().startsWith("{")) {
-                    const user = JSON.parse(resultText);
-
-                    // *** CRITICAL FIX: SAVE THE FULL USER OBJECT ***
-                    localStorage.setItem("loggedInUser", JSON.stringify(user));
-
-                    // --- NEW ROLE-BASED REDIRECTION LOGIC ---
-                    if (user.roleType === 'DRIVER') {
-                         window.location.href = "driver-dashboard.html";
-                    } else if (user.roleType === 'PASSENGER') {
-                         window.location.href = "passenger-dashboard.html";
-                    } else {
-                         window.location.href = "user-home.html"; // Fallback for other roles
-                    }
-                    // ------------------------------------------
-                } else {
-                    // If it's another error message (e.g., "User not found!" or "Incorrect password!")
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Login Failed',
-                        text: "Invalid credentials. Please try again. Backend response: " + resultText
-                    });
-                }
+                return;
             }
-        } catch (err) {
-            console.error("Fetch error:", err);
+
+            // ✅ USER LOGIN (Driver / Passenger)
+            if (text.includes("FIRST_LOGIN")) {
+                localStorage.setItem("userEmail", email);
+                window.location.href = "reset-password.html";
+                return;
+            }
+
+            // ✅ Successful User JSON
+            if (text.trim().startsWith("{")) {
+                const user = JSON.parse(text);
+
+                // ✅ Save user
+                localStorage.setItem("loggedInUser", JSON.stringify(user));
+
+                console.log("✅ Logged In:", user);
+
+                // ✅ CORRECT ROLE-BASED REDIRECT
+                if (user.roleType === "DRIVER") {
+                    window.location.href = "driver-dashboard.html";
+                }
+                else if (user.roleType === "PASSENGER") {
+                    window.location.href = "passenger-dashboard.html";
+                }
+                else if (user.roleType === "ADMIN") {
+                    window.location.href = "admin-dashboard.html";
+                }
+                else {
+                    window.location.href = "user-home.html";
+                }
+
+                return;
+            }
+
+            // ❌ Unknown error
             Swal.fire({
-                icon: 'error',
-                title: 'Connection Error',
-                text: "Error connecting to server. Check console for details."
+                icon: "error",
+                title: "Login Failed",
+                text: text
+            });
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: "error",
+                title: "Server Error",
+                text: "Unable to connect to server"
             });
         }
+
     });
 }

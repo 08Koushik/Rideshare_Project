@@ -1,17 +1,14 @@
 package com.rideshare.dto;
 
-// This DTO mirrors the fields you need from the front-end form
 public class OnboardUserRequest {
 
     private String name;
     private String email;
     private String contact;
-    private String role;
-    private String vehicle; // For Vehicle Number
-    private String driverLicenseNumber;
-    private String aadharNumber;
-
-    // --- Getters and Setters (REQUIRED for Spring) ---
+    private String role;                 // "ADMIN" | "DRIVER" | "PASSENGER"
+    private String vehicle;              // vehicleDetails for Driver
+    private String driverLicenseNumber;  // Driver
+    private String aadharNumber;         // Passenger
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

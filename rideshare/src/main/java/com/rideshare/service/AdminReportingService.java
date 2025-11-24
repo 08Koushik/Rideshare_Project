@@ -26,26 +26,24 @@ public class AdminReportingService {
     public AdminReportDTO getSystemReport() {
         AdminReportDTO report = new AdminReportDTO();
 
-        // 1. Total Rides
         report.setTotalRides(rideRepository.count());
-
-        // 2. Total Bookings
         report.setTotalBookings(bookingRepository.count());
 
-        // 3. Total Payments
         List<Payment> allPayments = paymentRepository.findAll();
         report.setTotalPayments(allPayments.size());
 
-        // 4. Total Earnings (Sum of successful payments)
         report.setTotalEarnings(allPayments.stream()
                 .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
                 .mapToDouble(Payment::getAmount)
                 .sum());
 
-        // 5. Ride Cancellations & Disputes (Bookings that are DENIED or CANCELED)
-        report.setTotalCancellations(bookingRepository.findAll().stream()
-                .filter(b -> b.getStatus().equalsIgnoreCase("DENIED") || b.getStatus().equalsIgnoreCase("CANCELED"))
-                .count());
+        long cancellations = bookingRepository.findAll().stream()
+                .filter(b -> {
+                    String s = b.getStatus();
+                    return s != null && (s.equalsIgnoreCase("DENIED") || s.equalsIgnoreCase("CANCELED"));
+                })
+                .count();
+        report.setTotalCancellations(cancellations);
 
         return report;
     }

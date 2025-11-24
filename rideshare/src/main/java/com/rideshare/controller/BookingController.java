@@ -2,16 +2,21 @@ package com.rideshare.controller;
 
 import com.rideshare.entity.Booking;
 import com.rideshare.entity.Ride;
+import com.rideshare.entity.User;
 import com.rideshare.repository.BookingRepository;
 import com.rideshare.repository.RideRepository;
+import com.rideshare.repository.UserRepository;
 import com.rideshare.service.PaymentService;
 import com.rideshare.service.BookingService;
+import com.rideshare.service.EmailService;
 import com.rideshare.dto.DriverRideRequestDTO;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import java.util.List;
 import com.rideshare.dto.ClientSecretResponse;
+import com.stripe.model.PaymentIntent;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/booking")
@@ -24,92 +29,103 @@ public class BookingController {
     private RideRepository rideRepository;
 
     @Autowired
-    private PaymentService paymentService;
+    private UserRepository userRepository;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private PaymentService paymentService;
 
     @Autowired
     private BookingService bookingService;
 
-    @PostMapping("/book")
-    public String bookRide(@RequestBody Booking bookingRequest, @RequestParam String paymentMethodId) {
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    // ---------------- 1. CREATE PAYMENT INTENT BEFORE BOOKING ----------------
+    @PostMapping("/create-intent")
+    public ClientSecretResponse createPaymentIntent(@RequestParam Long rideId,
+                                                    @RequestParam int seats) {
+
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RuntimeException("Ride not found"));
+
+        if (ride.getAvailableSeats() < seats)
+            throw new RuntimeException("Not enough seats available.");
+
+        double totalAmount = ride.getFarePerSeat() * seats;
+
+        String clientSecret = paymentService.createPaymentIntent(totalAmount);
+        return new ClientSecretResponse(clientSecret);
+    }
+
+    // ---------------- 2. FINAL BOOKING CONFIRMATION ----------------
+    @PostMapping("/confirm")
+    public String confirmBooking(@RequestBody Booking bookingRequest,
+                                 @RequestParam String paymentIntentId) {
+
         Long rideId = bookingRequest.getRideId();
         int seatsRequested = bookingRequest.getSeatsBooked();
         bookingRequest.setStatus("REQUESTED");
 
-        // 1️⃣ Find the ride by ID
+        // Retrieve ride
         Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new RuntimeException("Ride not found"));
 
-        // 2️⃣ Check if enough seats are available
-        if (ride.getAvailableSeats() < seatsRequested) {
-            throw new RuntimeException("Booking failed: Not enough seats available.");
+        // Retrieve passenger + driver
+        User passenger = userRepository.findById(bookingRequest.getPassengerId())
+                .orElseThrow(() -> new RuntimeException("Passenger not found"));
+
+        User driver = userRepository.findById(ride.getDriverId())
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+
+        // Seat check
+        if (ride.getAvailableSeats() < seatsRequested)
+            throw new RuntimeException("Not enough seats available.");
+
+        // Retrieve Stripe PaymentIntent
+        PaymentIntent intent = paymentService.retrievePaymentIntent(paymentIntentId);
+
+        if (!"succeeded".equals(intent.getStatus())) {
+            return "Payment FAILED or not completed. Status = " + intent.getStatus();
         }
 
-        // 3️⃣ CALCULATE PAYMENT AMOUNT
-        double farePerSeat = ride.getFarePerSeat();
-        double totalAmount = farePerSeat * seatsRequested;
+        // Save booking after payment confirmation
+        Booking saved = bookingRepository.save(bookingRequest);
 
-        // Set initial status and save booking record
-        Booking savedBooking = bookingRepository.save(bookingRequest);
-
-        // 5️⃣ PROCESS PAYMENT VIA STRIPE (Calls the 5-argument method)
-        String paymentStatusMessage = paymentService.createStripePaymentIntentAndConfirm(
-                savedBooking.getId(),
-                bookingRequest.getPassengerId(),
-                totalAmount,
-                rideId,
-                paymentMethodId // Passes the required payment method ID
-        );
-
-        // 6️⃣ Deduct seats & save Ride update
+        // Reduce seats
         ride.setAvailableSeats(ride.getAvailableSeats() - seatsRequested);
         rideRepository.save(ride);
 
-        // 7️⃣ Send Real-Time Notification to Driver
-        String driverTopic = "/topic/driver/" + ride.getDriverId() + "/updates";
-        String message = String.format("NEW BOOKING! Ride %d has %d new seat(s) booked. %d seats remaining.",
-                rideId, seatsRequested, ride.getAvailableSeats());
+        // Real-time update to driver
+        messagingTemplate.convertAndSend(
+                "/topic/driver/" + driver.getId() + "/updates",
+                "New booking! Seats: " + seatsRequested
+        );
 
-        messagingTemplate.convertAndSend(driverTopic, message);
+        // Send email
+        emailService.sendBookingConfirmation(
+                passenger.getEmail(),
+                passenger.getName(),
+                driver.getName(),
+                ride.getSource(),
+                ride.getDestination(),
+                ride.getDateTime().toString(),
+                seatsRequested,
+                ride.getFarePerSeat() * seatsRequested
+        );
 
-        // 8️⃣ Simulate Driver Payout (post-completion requirement)
-        paymentService.processDriverPayout(ride.getDriverId(), totalAmount);
-
-        // 9️⃣ Return success message
-        return "Booking successful! " + paymentStatusMessage;
+        return "Booking confirmed, Payment successful!";
     }
 
-    // NEW ENDPOINT: Fetch all requests/bookings for a specific driver
+    // ---------------- DRIVER REQUESTS ----------------
     @GetMapping("/driver/{driverId}/requests")
     public List<DriverRideRequestDTO> getDriverRequests(@PathVariable Long driverId) {
         return bookingService.getRideRequestsForDriver(driverId);
     }
 
-    // NEW ENDPOINT: Update the status of a specific booking (Accept/Deny)
-    @PostMapping("/{bookingId}/status")
-    public Booking updateRequestStatus(@PathVariable Long bookingId, @RequestParam String status) {
-        return bookingService.updateBookingStatus(bookingId, status);
-    }
-
-    @PostMapping("/create-intent")
-    public ClientSecretResponse createPaymentIntent(@RequestParam Long rideId, @RequestParam int seats) {
-        // 1. Find the ride and calculate the total amount
-        Ride ride = rideRepository.findById(rideId)
-                .orElseThrow(() -> new RuntimeException("Ride not found"));
-
-        if (ride.getAvailableSeats() < seats) {
-            throw new RuntimeException("Booking failed: Not enough seats available.");
-        }
-
-        double totalAmount = ride.getFarePerSeat() * seats;
-
-        // 2. Call the service method to create the intent and get the secret
-        String clientSecret = paymentService.createPaymentIntent(totalAmount);
-
-        return new ClientSecretResponse(clientSecret);
-    }
+    // ---------------- ADMIN VIEW ----------------
     @GetMapping("/admin/bookings")
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();

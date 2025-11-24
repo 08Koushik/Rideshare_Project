@@ -1,65 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin User List</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    body {
-      background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
-      background-size: cover;
-      font-family: 'Poppins', sans-serif;
-    }
-    .user-list-container {
-      max-width: 1200px;
-      margin: 80px auto;
-      padding: 30px;
-      background-color: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(5px);
-      border-radius: 12px;
-      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.15);
-    }
-    .user-list-container h2 {
-      color: #4facfe;
-      margin-bottom: 20px;
-    }
-    #userTableContainer table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 0.9em;
-    }
-    #userTableContainer th, #userTableContainer td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-    }
-    #userTableContainer th {
-      background-color: #4facfe;
-      color: white;
-      cursor: pointer;
-    }
-    .action-btn {
-      padding: 5px 10px;
-      margin: 2px;
-      font-size: 0.8em;
-    }
-    .status-VERIFIED { color: green; font-weight: bold; }
-    .status-NOT-VERIFIED { color: orange; font-weight: bold; }
-    .status-BLOCKED { color: red; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin User List</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+          background: url('images/blue_abstract_bg.png') no-repeat center center fixed;
+          background-size: cover;
+          font-family: 'Poppins', sans-serif;
+        }
+        .user-list-container {
+          max-width: 1200px;
+          margin: 80px auto;
+          padding: 30px;
+          /* Adjusted transparency and removed blur */
+          background-color: rgba(255, 255, 255, 0.4);
+          border-radius: 12px;
+          box-shadow: 0 5px 30px rgba(0, 0, 0, 0.15);
+        }
+        .user-list-container h2 {
+          color: #4facfe;
+          margin-bottom: 20px;
+        }
+        #userTableContainer table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+          font-size: 0.9em;
+        }
+        /* Make table cells semi-transparent white */
+        #userTableContainer th, #userTableContainer td {
+          border: 1px solid #ddd;
+          padding: 10px;
+          text-align: left;
+          /* Set content cells to semi-transparent white */
+          background-color: rgba(255, 255, 255, 0.7);
+        }
+        #userTableContainer th {
+          /* Keep header prominent */
+          background-color: #4facfe;
+          color: white;
+          cursor: pointer;
+        }
+        .action-btn {
+          padding: 5px 10px;
+          margin: 2px;
+          font-size: 0.8em;
+        }
+        .status-VERIFIED { color: green; font-weight: bold; }
+        .status-NOT-VERIFIED { color: orange; font-weight: bold; }
+        .status-BLOCKED { color: red; font-weight: bold; }
+    </style>
 </head>
 <body>
 <div class="back-nav"><a href="admin-dashboard.html">&leftarrow; Back to Dashboard</a></div>
 
 <div class="user-list-container">
-  <h2>Manage All Users</h2>
-  <div id="userTableContainer">
-    <p>Loading user data...</p>
-  </div>
+    <h2>Manage All Users</h2>
+    <div id="userTableContainer">
+        <p>Loading user data...</p>
+    </div>
 </div>
 
 <script src="js/common.js"></script>

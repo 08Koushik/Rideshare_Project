@@ -1,21 +1,23 @@
 package com.rideshare.controller;
 
 import com.rideshare.entity.Ride;
+import com.rideshare.entity.User;
 import com.rideshare.repository.RideRepository;
+import com.rideshare.repository.UserRepository;
 import com.rideshare.service.FileStorageService;
 import com.rideshare.service.GeoService;
+import com.rideshare.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile; // NEW IMPORT
-import java.io.IOException;
-import com.rideshare.dto.RideDetailsResponse; // NEW IMPORT
+import org.springframework.web.multipart.MultipartFile;
+
+import com.rideshare.dto.RideDetailsResponse;
 import com.rideshare.service.RideSearchService;
 
+import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/rides")
@@ -23,6 +25,9 @@ public class RideController {
 
     @Autowired
     private RideRepository rideRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private GeoService geoService;
@@ -33,62 +38,95 @@ public class RideController {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private EmailService emailService;
+
+    // -------------------------------------------------------------
+    // ✅ POST A RIDE
+    // -------------------------------------------------------------
     @PostMapping(value = "/post", consumes = {"multipart/form-data"})
     public Ride postRide(
-            @RequestPart("rideData") Ride ride, // Changed from @RequestBody
-            @RequestPart(value = "vehicleImages", required = false) List<MultipartFile> vehicleImages) throws IOException {
+            @RequestPart("rideData") Ride ride,
+            @RequestPart(value = "vehicleImages", required = false) List<MultipartFile> vehicleImages
+    ) throws IOException {
 
-
+        // Save vehicle images
         List<String> imagePaths = new ArrayList<>();
 
         if (vehicleImages != null && !vehicleImages.isEmpty()) {
             for (MultipartFile vehicleImage : vehicleImages) {
-                if (vehicleImage != null && !vehicleImage.isEmpty()) {
-                    String imagePath = fileStorageService.storeFile(vehicleImage); // Saves file and returns web path
-                    imagePaths.add(imagePath);
+                if (!vehicleImage.isEmpty()) {
+                    String path = fileStorageService.storeFile(vehicleImage);
+                    imagePaths.add(path);
                 }
             }
         }
+
         ride.setVehicleImageReference(String.join(";", imagePaths));
 
+        // Calculate fare automatically
         double distance = geoService.getDistanceInKm(ride.getSource(), ride.getDestination());
         double totalFare = geoService.calculateFare(distance);
-        ride.setFarePerSeat(totalFare / ride.getAvailableSeats());
-        return rideRepository.save(ride);
+        double farePerSeat = totalFare / ride.getAvailableSeats();
+
+        ride.setFarePerSeat(farePerSeat);
+
+        Ride savedRide = rideRepository.save(ride);
+
+        // Send ride post confirmation email
+        User driver = userRepository.findById(ride.getDriverId())
+                .orElseThrow(() -> new RuntimeException("Driver not found."));
+
+        emailService.sendRidePostConfirmation(
+                driver.getEmail(),
+                driver.getName(),
+                savedRide.getSource(),
+                savedRide.getDestination(),
+                savedRide.getDateTime().toString(),
+                farePerSeat
+        );
+
+        return savedRide;
     }
 
-    // ✅ Search rides - UPDATED TO INCLUDE PARTIAL MATCHES (Route Matching)
+    // -------------------------------------------------------------
+    // ✅ SEARCH RIDES (FIXED – REAL PARTIAL SEARCH)
+    // -------------------------------------------------------------
     @GetMapping("/search")
     public List<RideDetailsResponse> searchRides(
             @RequestParam String source,
             @RequestParam String destination,
             @RequestParam String date
     ) {
-        LocalDate searchDate = LocalDate.parse(date);
 
-        // 1. Get Direct Matches (Exact Source and Destination)
-        List<Ride> directMatches = rideRepository.findRidesBySourceDestinationAndDate(source, destination, searchDate);
+        LocalDate searchDate = LocalDate.parse(date.trim());
 
-        // 2. Get Partial Matches (Rides along the route - simple heuristic)
-        // NOTE: findPartialRidesBySourceOrDestination method must be added to RideRepository
-        List<Ride> partialMatches = rideRepository.findPartialRidesBySourceOrDestination(source, destination, searchDate);
+        // Flexible search → matches ANY part of LocationIQ address
+        List<Ride> results = rideRepository.searchRidesFlexible(
+                source.trim(),
+                destination.trim(),
+                searchDate
+        );
 
-        // 3. Combine and remove duplicates using a Set
-        Set<Ride> allRides = new HashSet<>(directMatches);
-        allRides.addAll(partialMatches);
-
-        return rideSearchService.searchRides(source, destination, date);
+        // Convert Ride → RideDetailsResponse
+        return results.stream()
+                .map(rideSearchService::mapToRideDetails)
+                .toList();
     }
 
-    // NEW ENDPOINT for Driver Ride History
+    // -------------------------------------------------------------
+    // ✅ DRIVER RIDE HISTORY
+    // -------------------------------------------------------------
     @GetMapping("/driver/{driverId}/history")
     public List<Ride> getDriverRideHistory(@PathVariable Long driverId) {
-        // NOTE: findByDriverId method must be added to RideRepository
         return rideRepository.findByDriverId(driverId);
     }
+
+    // -------------------------------------------------------------
+    // ✅ ADMIN – GET ALL RIDES
+    // -------------------------------------------------------------
     @GetMapping("/admin/rides")
     public List<Ride> getAllRides() {
         return rideRepository.findAll();
     }
-
 }
